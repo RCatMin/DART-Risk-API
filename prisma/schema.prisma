@@ -30,15 +30,46 @@ enum DisclosureStatus {
 }
 
 model Disclosure {
-  id       Int              @id @default(autoincrement())
-  rceptNo  String           @unique @map("rcept_no")
-  corpCode String           @map("corp_code")
-  company  Company          @relation(fields: [corpCode], references: [corpCode])
-  reportNm String           @map("report_nm")
-  rceptDt  DateTime         @map("rcept_dt")
-  rawText  String?          @map("raw_text")
-  status   DisclosureStatus @default(pending)
+  id        Int              @id @default(autoincrement())
+  rceptNo   String           @unique @map("rcept_no")
+  corpCode  String           @map("corp_code")
+  company   Company          @relation(fields: [corpCode], references: [corpCode])
+  reportNm  String           @map("report_nm")
+  rceptDt   DateTime         @map("rcept_dt")
+  rawText   String?          @map("raw_text")
+  status    DisclosureStatus @default(pending)
+  riskFlags RiskFlag[]
 
   @@map("disclosures")
   @@index([corpCode])
+}
+
+// CLAUDE.md 스코프에 고정된 5개 리스크 유형
+enum RiskType {
+  audit_opinion_adverse
+  embezzlement
+  litigation
+  management_designation
+  not_applicable
+}
+
+enum RiskSeverity {
+  low
+  medium
+  high
+}
+
+model RiskFlag {
+  id            Int          @id @default(autoincrement())
+  disclosureId  Int          @map("disclosure_id")
+  disclosure    Disclosure   @relation(fields: [disclosureId], references: [id])
+  riskType      RiskType     @map("risk_type")
+  severity      RiskSeverity
+  summary       String
+  confidence    Float
+  sourceSnippet String       @map("source_snippet")
+  createdAt     DateTime     @default(now()) @map("created_at")
+
+  @@map("risk_flags")
+  @@index([disclosureId])
 }

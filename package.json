@@ -10,6 +10,7 @@
     "seed:watchlist": "tsc && node --env-file=.env dist/scripts/seed-watchlist.js",
     "collect:disclosures": "tsc && node --env-file=.env dist/scripts/collect-disclosures.js",
     "extract:texts": "tsc && node --env-file=.env dist/scripts/extract-texts.js",
+    "classify:risks": "tsc && node --env-file=.env dist/scripts/classify-risks.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

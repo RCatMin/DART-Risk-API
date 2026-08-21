@@ -11,7 +11,7 @@
 - Express (또는 Fastify)
 - PostgreSQL + Prisma
 - Redis + BullMQ
-- Claude API (분류/요약, structured JSON output)
+- Claude API (분류/요약, structured JSON output) — Phase 3에서는 API 크레딧 미확보로 룰 기반(키워드+부정문 감지) 엔진으로 대체 구현. 크레딧 확보 시 보강 예정, 코드는 그대로 유지
 - Railway (배포)
 - k6 (부하 테스트)
 - pino (구조화 로깅)
@@ -46,7 +46,7 @@ JobLog      { job_id, job_type, status, duration_ms, error_message }
 | 0 | 프로젝트 셋업 (package.json, tsconfig, prisma init, .env.example) | `npm run build` 통과, DART API 테스트 호출 성공 |
 | 1 | Prisma 스키마(Company/Disclosure), 공시목록 API 연동, 중복 방지 | 신규 공시만 DB에 쌓이고 재실행해도 중복 안 생김 |
 | 2 | 공시원문 zip 다운로드·해제·텍스트 추출 | 사업보고서/감사보고서 각 1건 이상 텍스트 추출 성공 |
-| 3 | 키워드 1차 필터 + Claude API 분류/요약 | RiskFlag 저장, 수동 샘플 10건 검증 |
+| 3 | 키워드 1차 필터 + 룰 기반 리스크 분류(부정문 감지로 오탐 제거) — Claude API는 크레딧 확보 후 보강 | RiskFlag 저장, 수동 샘플 10건 검증 |
 | 4 | BullMQ 전환 (수집/파싱/분류 job 분리), 재시도·백오프 | 강제로 실패시켜도 정책대로 재시도 후 dead-letter 처리됨 |
 | 5 | 조회 REST API, API Key 인증, Redis 캐시 | 캐시 적용 전/후 응답시간 차이 확인 가능 |
 | 6 | 구조화 로깅, job 실행 로그 | 실패 job의 원인을 로그만 보고 파악 가능 |
