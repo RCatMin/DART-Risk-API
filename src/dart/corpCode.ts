@@ -1,7 +1,4 @@
-import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { unzipToText } from "../lib/zip.js";
 
 export interface CorpCodeEntry {
   corpCode: string;
@@ -28,29 +25,18 @@ export async function fetchCorpCodeMap(): Promise<Map<string, CorpCodeEntry>> {
   if (!res.ok) throw new Error(`DART corpCode.xml 요청 실패: ${res.status}`);
   const zipBuffer = Buffer.from(await res.arrayBuffer());
 
-  if (zipBuffer.subarray(0, 2).toString() !== "PK") {
-    throw new Error(`DART corpCode 응답이 zip이 아닙니다: ${zipBuffer.toString("utf-8").slice(0, 200)}`);
-  }
+  const [file] = unzipToText(zipBuffer);
+  const xml = file?.content ?? "";
 
-  const dir = mkdtempSync(join(tmpdir(), "dart-corpcode-"));
-  try {
-    const zipPath = join(dir, "corpCode.zip");
-    writeFileSync(zipPath, zipBuffer);
-    execFileSync("unzip", ["-o", zipPath, "-d", dir]);
-    const xml = readFileSync(join(dir, "CORPCODE.xml"), "utf-8");
-
-    const map = new Map<string, CorpCodeEntry>();
-    for (const match of xml.matchAll(/<list>([\s\S]*?)<\/list>/g)) {
-      const block = match[1] ?? "";
-      const corpCode = block.match(/<corp_code>(.*?)<\/corp_code>/)?.[1]?.trim();
-      const corpName = block.match(/<corp_name>(.*?)<\/corp_name>/)?.[1]?.trim();
-      const stockCode = block.match(/<stock_code>(.*?)<\/stock_code>/)?.[1]?.trim();
-      if (corpCode && stockCode) {
-        map.set(stockCode, { corpCode, corpName: decodeXmlEntities(corpName ?? ""), stockCode });
-      }
+  const map = new Map<string, CorpCodeEntry>();
+  for (const match of xml.matchAll(/<list>([\s\S]*?)<\/list>/g)) {
+    const block = match[1] ?? "";
+    const corpCode = block.match(/<corp_code>(.*?)<\/corp_code>/)?.[1]?.trim();
+    const corpName = block.match(/<corp_name>(.*?)<\/corp_name>/)?.[1]?.trim();
+    const stockCode = block.match(/<stock_code>(.*?)<\/stock_code>/)?.[1]?.trim();
+    if (corpCode && stockCode) {
+      map.set(stockCode, { corpCode, corpName: decodeXmlEntities(corpName ?? ""), stockCode });
     }
-    return map;
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
   }
+  return map;
 }
