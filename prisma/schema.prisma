@@ -5,9 +5,40 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Company {
+  corpCode    String       @id @map("corp_code")
+  corpName    String       @map("corp_name")
+  stockCode   String       @unique @map("stock_code")
+  isWatched   Boolean      @default(false) @map("is_watched")
+  disclosures Disclosure[]
+
+  @@map("companies")
+}
+
+enum DisclosureStatus {
+  pending
+  processing
+  done
+  failed
+}
+
+model Disclosure {
+  id       Int              @id @default(autoincrement())
+  rceptNo  String           @unique @map("rcept_no")
+  corpCode String           @map("corp_code")
+  company  Company          @relation(fields: [corpCode], references: [corpCode])
+  reportNm String           @map("report_nm")
+  rceptDt  DateTime         @map("rcept_dt")
+  rawText  String?          @map("raw_text")
+  status   DisclosureStatus @default(pending)
+
+  @@map("disclosures")
+  @@index([corpCode])
 }
