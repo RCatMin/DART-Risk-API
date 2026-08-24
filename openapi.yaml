@@ -1,0 +1,367 @@
+openapi: 3.0.3
+info:
+  title: dart-risk-api
+  description: >
+    상장사 전자공시(DART)를 자동 수집·분석하여 리스크 조항을 탐지·요약하는 조회용 API.
+    모든 응답에는 "투자 자문이 아니라 참고용 정보"라는 disclaimer가 포함됩니다.
+    이 스펙은 Phase 8 React 대시보드가 사용하는 API 계약(contract)입니다.
+  version: "1.0.0"
+servers:
+  - url: http://localhost:3000
+    description: 로컬 개발 서버
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /health:
+    get:
+      summary: 헬스체크
+      description: 인증 없이 호출 가능. 서버 프로세스 생존 여부만 확인.
+      security: []
+      responses:
+        "200":
+          description: 서버 정상
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/companies:
+    get:
+      summary: 워치리스트 기업 목록
+      parameters:
+        - name: isWatched
+          in: query
+          description: "true(기본값)면 워치리스트 기업만, false면 비워치리스트, all이면 전체."
+          schema:
+            type: string
+            enum: [true, false, all]
+            default: "true"
+      responses:
+        "200":
+          description: 기업 목록
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Company"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/companies/{corpCode}/disclosures:
+    get:
+      summary: 기업별 공시 목록
+      description: 각 공시 항목에 리스크 플래그 건수(`_count.riskFlags`)를 함께 반환합니다.
+      parameters:
+        - name: corpCode
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "00126380"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: 공시 목록
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/DisclosureSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: 존재하지 않는 corpCode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /api/disclosures/{id}:
+    get:
+      summary: 공시 상세 조회
+      description: >
+        기본 응답에는 `rawText`(원문 텍스트, 1MB 이상일 수 있음)가 빠져 있습니다.
+        `includeRawText=true`일 때만 포함됩니다.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: includeRawText
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: 공시 상세 (company, riskFlags 포함)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/DisclosureDetail"
+        "400":
+          description: id가 정수가 아님
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: 존재하지 않는 id
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+
+  /api/risk-flags:
+    get:
+      summary: 리스크 플래그 조회
+      description: CLAUDE.md에 고정된 5개 리스크 유형만 유효합니다.
+      parameters:
+        - name: riskType
+          in: query
+          schema:
+            $ref: "#/components/schemas/RiskType"
+        - name: severity
+          in: query
+          schema:
+            $ref: "#/components/schemas/RiskSeverity"
+        - name: corpCode
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: 리스크 플래그 목록
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/RiskFlag"
+        "400":
+          description: riskType 또는 severity가 유효하지 않은 값
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  responses:
+    Unauthorized:
+      description: API 키 누락 또는 불일치
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+
+  schemas:
+    Disclaimer:
+      type: string
+      example: "본 API가 제공하는 정보는 투자 자문이 아니라 참고용 정보입니다."
+
+    OkEnvelope:
+      type: object
+      properties:
+        data: {}
+        meta:
+          type: object
+          properties:
+            disclaimer:
+              $ref: "#/components/schemas/Disclaimer"
+
+    ErrorEnvelope:
+      type: object
+      properties:
+        error:
+          type: string
+        meta:
+          type: object
+          properties:
+            disclaimer:
+              $ref: "#/components/schemas/Disclaimer"
+
+    RiskType:
+      type: string
+      enum:
+        - audit_opinion_adverse
+        - embezzlement
+        - litigation
+        - management_designation
+        - not_applicable
+
+    RiskSeverity:
+      type: string
+      enum: [low, medium, high]
+
+    DisclosureStatus:
+      type: string
+      enum: [pending, processing, done, failed]
+
+    Company:
+      type: object
+      properties:
+        corpCode:
+          type: string
+          example: "00126380"
+        corpName:
+          type: string
+          example: "삼성전자"
+        stockCode:
+          type: string
+          example: "005930"
+        isWatched:
+          type: boolean
+
+    DisclosureSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        rceptNo:
+          type: string
+        reportNm:
+          type: string
+        rceptDt:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/DisclosureStatus"
+        _count:
+          type: object
+          properties:
+            riskFlags:
+              type: integer
+
+    DisclosureDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        rceptNo:
+          type: string
+        corpCode:
+          type: string
+        reportNm:
+          type: string
+        rceptDt:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/DisclosureStatus"
+        rawText:
+          type: string
+          nullable: true
+          description: "includeRawText=true일 때만 포함"
+        company:
+          type: object
+          properties:
+            corpCode:
+              type: string
+            corpName:
+              type: string
+            stockCode:
+              type: string
+        riskFlags:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskFlag"
+
+    RiskFlag:
+      type: object
+      properties:
+        id:
+          type: integer
+        disclosureId:
+          type: integer
+        riskType:
+          $ref: "#/components/schemas/RiskType"
+        severity:
+          $ref: "#/components/schemas/RiskSeverity"
+        summary:
+          type: string
+        confidence:
+          type: number
+          format: float
+        sourceSnippet:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        disclosure:
+          type: object
+          description: "/api/risk-flags 응답에만 포함되는 부가 정보"
+          properties:
+            rceptNo:
+              type: string
+            reportNm:
+              type: string
+            rceptDt:
+              type: string
+              format: date-time
+            corpCode:
+              type: string
+            company:
+              type: object
+              properties:
+                corpName:
+                  type: string

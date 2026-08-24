@@ -11,6 +11,7 @@
     "workers": "tsc && node --env-file=.env dist/queue/run-workers.js",
     "enqueue:collect": "tsc && node --env-file=.env dist/scripts/enqueue-collect.js",
     "enqueue:test-failure": "tsc && node --env-file=.env dist/scripts/enqueue-test-failure.js",
+    "loadtest": "set -a && . ./.env && set +a && k6 run -e API_KEY=\"$API_KEY\" -e BASE_URL=\"http://localhost:${PORT:-3000}\" -e CORP_CODE=00126380 k6/load-test.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
