@@ -88,3 +88,26 @@
 - **해결**: `URLSearchParams.set()`에 넣기 전에 `decodeURIComponent(serviceKey)`로 한 번
   디코딩해서 원본 값을 복원한 뒤 넘긴다 (`src/marketcap/dataGoKr.ts`). 이렇게 하면
   사용자가 인코딩된 키/원본 키 중 어느 쪽을 `.env`에 넣어도 안전하게 동작한다.
+
+---
+
+## BullMQ dead-letter 후처리 콜백의 예외가 워커 프로세스 전체를 죽임
+
+- **발생 시점**: Phase 4, 재시도·dead-letter 정책을 강제 실패로 검증하는 중
+- **증상**
+
+  존재하지 않는 `disclosureId`로 `extract` job을 넣어 3회 재시도 후 dead-letter로
+  이동시키는 것까지는 성공했는데, 그 다음 실행되는 `onFinalFailure` 콜백(해당 공시의
+  `status`를 `failed`로 업데이트)이 "레코드가 없다"는 Prisma 예외(`P2025`)를 던졌고,
+  이게 어디서도 안 잡혀서 `unhandledRejection`으로 번지며 **워커 프로세스 전체가 종료**됐다.
+  즉 job 하나의 후처리 실패가 나머지 대기 중인 모든 job까지 멈춰버리는 상황.
+
+- **원인**: `attachDeadLetterHandler`(`src/queue/dead-letter.ts`)의 `worker.on("failed", ...)`
+  핸들러 안에서 `onFinalFailure(job)`을 try/catch 없이 호출했다. BullMQ의 이벤트 리스너
+  안에서 던져진 예외는 워커가 대신 처리해주지 않고 그대로 프로세스까지 전파된다.
+
+- **해결**: dead-letter 큐에 기록하는 부분과 `onFinalFailure` 콜백 호출 부분을 각각
+  try/catch로 감싸서, 후처리 자체가 실패해도 로그만 남기고 워커는 계속 살아있게 했다.
+  추가로 `run-workers.ts`에 `process.on("unhandledRejection", ...)` /
+  `process.on("uncaughtException", ...)` 안전망을 걸어서, 예상 못한 예외 하나가
+  전체 워커를 죽이지 않도록 했다.
