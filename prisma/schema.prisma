@@ -73,3 +73,21 @@ model RiskFlag {
   @@map("risk_flags")
   @@index([disclosureId])
 }
+
+enum JobStatus {
+  success
+  failed
+}
+
+model JobLog {
+  id           Int       @id @default(autoincrement())
+  jobId        String    @map("job_id")
+  jobType      String    @map("job_type")
+  status       JobStatus
+  durationMs   Int       @map("duration_ms")
+  errorMessage String?   @map("error_message")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("job_logs")
+  @@index([jobType, status])
+}
