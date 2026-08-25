@@ -27,7 +27,7 @@ export function RiskCard({ flag, corpName, corpCode }: RiskCardProps) {
         )}
       </header>
 
-      <div className="risk-card__body">
+      <div className={`risk-card__body risk-card__body--${variant.toLowerCase()}`}>
         <div className="risk-card__body-top">
           <RiskBadge variant={variant} label={label} />
           <span className="risk-card__confidence">

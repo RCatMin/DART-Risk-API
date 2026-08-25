@@ -10,14 +10,20 @@ interface AddCompanyPanelProps {
   onClose: () => void;
 }
 
+const RESULTS_PER_PAGE = 5;
+
 // DESIGN.md에는 아직 없는 컴포넌트 — 워치리스트 종목 추가 API(POST /api/companies,
 // GET /api/companies/search) 연동용. 다음 omd:learn 때 components-states에 정식 등록 필요.
 export function AddCompanyPanel({ existingCorpCodes, onAdded, onClose }: AddCompanyPanelProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CompanySearchResult[]>([]);
+  const [page, setPage] = useState(0);
   const [status, setStatus] = useState<"idle" | "searching" | "error">("idle");
   const [usingMock, setUsingMock] = useState(false);
   const [addingCorpCode, setAddingCorpCode] = useState<string | null>(null);
+
+  const pageCount = Math.ceil(results.length / RESULTS_PER_PAGE);
+  const pagedResults = results.slice(page * RESULTS_PER_PAGE, page * RESULTS_PER_PAGE + RESULTS_PER_PAGE);
 
   async function handleSearch(event: FormEvent) {
     event.preventDefault();
@@ -33,6 +39,7 @@ export function AddCompanyPanel({ existingCorpCodes, onAdded, onClose }: AddComp
       setUsingMock(true);
       setStatus("idle");
     }
+    setPage(0);
   }
 
   async function handleAdd(candidate: CompanySearchResult) {
@@ -76,7 +83,7 @@ export function AddCompanyPanel({ existingCorpCodes, onAdded, onClose }: AddComp
       )}
 
       <ul className="add-company-panel__results">
-        {results.map((candidate) => {
+        {pagedResults.map((candidate) => {
           const alreadyWatched = existingCorpCodes.includes(candidate.corpCode);
           return (
             <li key={candidate.corpCode} className="add-company-panel__result-row">
@@ -98,6 +105,30 @@ export function AddCompanyPanel({ existingCorpCodes, onAdded, onClose }: AddComp
           );
         })}
       </ul>
+
+      {pageCount > 1 && (
+        <div className="add-company-panel__pagination">
+          <button
+            type="button"
+            className="add-company-panel__page-button"
+            disabled={page === 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+          >
+            이전
+          </button>
+          <span className="add-company-panel__page-status">
+            {page + 1} / {pageCount}
+          </span>
+          <button
+            type="button"
+            className="add-company-panel__page-button"
+            disabled={page >= pageCount - 1}
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+          >
+            다음
+          </button>
+        </div>
+      )}
     </div>
   );
 }

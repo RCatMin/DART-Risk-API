@@ -5,6 +5,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
+  animation: fade-in-up var(--transition-base) both;
 }
 
 .add-company-panel__form {
@@ -36,6 +37,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
+  transition: background-color var(--transition-fast);
 }
 
 .add-company-panel__search-button {
@@ -76,6 +78,7 @@
   background: var(--color-canvas);
   border-radius: var(--radius-control);
   padding: 8px 12px;
+  animation: fade-in-up var(--transition-base) both;
 }
 
 .add-company-panel__result-name {
@@ -101,10 +104,51 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.add-company-panel__add-button:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: #ffffff;
 }
 
 .add-company-panel__add-button:disabled {
   border-color: var(--color-border);
   color: var(--color-muted);
   cursor: default;
+}
+
+.add-company-panel__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.add-company-panel__page-button {
+  border: 1px solid var(--color-border);
+  background: var(--color-canvas);
+  color: var(--color-body);
+  border-radius: var(--radius-control);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.add-company-panel__page-button:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.add-company-panel__page-button:disabled {
+  color: var(--color-muted);
+  cursor: default;
+}
+
+.add-company-panel__page-status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
 }

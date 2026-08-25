@@ -32,4 +32,7 @@
   --space-lg: 24px;
 
   --font-family-ui: "Pretendard Variable", "Pretendard", -apple-system, "Apple SD Gothic Neo", sans-serif;
+
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
 }

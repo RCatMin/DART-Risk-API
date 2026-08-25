@@ -4,46 +4,66 @@ import type { Company, CompanySearchResult, RiskSummaryEntry } from "./api";
 export const MOCK_RISK_SUMMARY: RiskSummaryEntry[] = [
   {
     company: { corpCode: "00126380", corpName: "삼성전자", stockCode: "005930", isWatched: true },
-    riskFlag: {
-      id: 1,
-      disclosureId: 1,
-      riskType: "litigation",
-      severity: "high",
-      summary: "계열사 관련 소송 피고 지정",
-      confidence: 0.91,
-      sourceSnippet:
-        "당사는 계열사 관련 소송에서 피고로 지정되었으며, 청구금액은 자기자본의 12%에 해당하는 320억원입니다.",
-      createdAt: new Date().toISOString(),
-      disclosure: {
-        rceptNo: "20260301000001",
-        reportNm: "사업보고서",
-        rceptDt: "2026-03-01",
-        corpCode: "00126380",
+    riskFlags: [
+      {
+        id: 1,
+        disclosureId: 1,
+        riskType: "litigation",
+        severity: "high",
+        summary: "계열사 관련 소송 피고 지정",
+        confidence: 0.91,
+        sourceSnippet:
+          "당사는 계열사 관련 소송에서 피고로 지정되었으며, 청구금액은 자기자본의 12%에 해당하는 320억원입니다.",
+        createdAt: new Date().toISOString(),
+        disclosure: {
+          rceptNo: "20260301000001",
+          reportNm: "사업보고서",
+          rceptDt: "2026-03-01",
+          corpCode: "00126380",
+        },
       },
-    },
+      {
+        id: 2,
+        disclosureId: 1,
+        riskType: "dilution",
+        severity: "medium",
+        summary: "전환사채 발행으로 인한 지분희석 우려",
+        confidence: 0.72,
+        sourceSnippet: "당사는 운영자금 조달을 위해 전환사채를 발행하였으며, 전환 청구 시 지분율 희석이 발생할 수 있습니다.",
+        createdAt: new Date().toISOString(),
+        disclosure: {
+          rceptNo: "20260301000001",
+          reportNm: "사업보고서",
+          rceptDt: "2026-03-01",
+          corpCode: "00126380",
+        },
+      },
+    ],
   },
   {
     company: { corpCode: "00164779", corpName: "SK하이닉스", stockCode: "000660", isWatched: true },
-    riskFlag: {
-      id: 2,
-      disclosureId: 2,
-      riskType: "audit_opinion_adverse",
-      severity: "medium",
-      summary: "감사인 한정의견",
-      confidence: 0.63,
-      sourceSnippet: "감사인은 계속기업 존속능력에 대한 불확실성과 관련하여 한정의견을 표명하였습니다.",
-      createdAt: new Date().toISOString(),
-      disclosure: {
-        rceptNo: "20260228000002",
-        reportNm: "감사보고서",
-        rceptDt: "2026-02-28",
-        corpCode: "00164779",
+    riskFlags: [
+      {
+        id: 3,
+        disclosureId: 2,
+        riskType: "audit_opinion_adverse",
+        severity: "medium",
+        summary: "감사인 한정의견",
+        confidence: 0.63,
+        sourceSnippet: "감사인은 계속기업 존속능력에 대한 불확실성과 관련하여 한정의견을 표명하였습니다.",
+        createdAt: new Date().toISOString(),
+        disclosure: {
+          rceptNo: "20260228000002",
+          reportNm: "감사보고서",
+          rceptDt: "2026-02-28",
+          corpCode: "00164779",
+        },
       },
-    },
+    ],
   },
   {
     company: { corpCode: "00164742", corpName: "현대차", stockCode: "005380", isWatched: true },
-    riskFlag: null,
+    riskFlags: [],
   },
 ];
 
@@ -67,5 +87,5 @@ export function searchMock(q: string, excludeCorpCodes: string[]): CompanySearch
 }
 
 export function mockCompanyToSummary(company: Company): RiskSummaryEntry {
-  return { company, riskFlag: null };
+  return { company, riskFlags: [] };
 }

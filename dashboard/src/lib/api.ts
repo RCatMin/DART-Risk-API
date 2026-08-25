@@ -6,6 +6,8 @@ export type RiskType =
   | "embezzlement"
   | "litigation"
   | "management_designation"
+  | "insolvency"
+  | "dilution"
   | "not_applicable";
 
 export type RiskSeverity = "low" | "medium" | "high";
@@ -83,9 +85,10 @@ export function fetchCompanies(params?: { isWatched?: "true" | "false" | "all" }
 
 export interface RiskSummaryEntry {
   company: Company;
-  // 서버가 회사마다 독립적으로 "가장 심각하고, 동률이면 가장 최근인 리스크 1건"을 계산해서
-  // 준다 — not_applicable은 서버에서 이미 제외되어 있으므로 null이면 진짜 "해당없음"이다.
-  riskFlag: RiskFlag | null;
+  // 회사 하나가 서로 다른 유형의 리스크를 동시에 가질 수 있어(예: 소송 + 지분희석)
+  // 서버가 유형별 대표 플래그를 심각도 내림차순 배열로 준다 — not_applicable은 서버에서
+  // 이미 제외되어 있으므로 빈 배열이면 진짜 "해당없음"이다.
+  riskFlags: RiskFlag[];
 }
 
 export function fetchRiskSummary(params?: { isWatched?: "true" | "false" | "all" }) {

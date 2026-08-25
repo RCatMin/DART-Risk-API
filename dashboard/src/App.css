@@ -52,10 +52,27 @@
   margin: 0;
 }
 
+.page__section-count {
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.risk-card-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
 .page__section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.page__section-actions {
+  display: flex;
+  gap: var(--space-sm);
 }
 
 .page__add-toggle {
@@ -69,8 +86,16 @@
   cursor: pointer;
 }
 
+.page__add-toggle {
+  transition: background-color var(--transition-fast);
+}
+
 .page__add-toggle:hover {
   background: var(--color-surface);
+}
+
+.page__section {
+  animation: fade-in-up var(--transition-base) both;
 }
 
 .no-risk-notice {
@@ -81,6 +106,7 @@
   flex-direction: column;
   gap: var(--space-sm);
   box-shadow: 0 1px 2px rgba(25, 31, 40, 0.04), 0 4px 16px rgba(25, 31, 40, 0.05);
+  animation: fade-in-up var(--transition-base) both;
 }
 
 .no-risk-notice__text {
@@ -97,4 +123,132 @@
   border-radius: var(--radius-card);
   box-shadow: 0 1px 2px rgba(25, 31, 40, 0.04), 0 4px 16px rgba(25, 31, 40, 0.05);
   overflow: hidden;
+  animation: fade-in var(--transition-base) both;
+}
+
+.watchlist-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.watchlist-pagination__button {
+  border: 1px solid var(--color-border);
+  background: var(--color-canvas);
+  color: var(--color-body);
+  border-radius: var(--radius-control);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.watchlist-pagination__button:hover:not(:disabled) {
+  background: var(--color-surface);
+}
+
+.watchlist-pagination__button:disabled {
+  color: var(--color-muted);
+  cursor: default;
+}
+
+.watchlist-pagination__status {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.group-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.group-tabs__tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-chip);
+  padding: 4px 4px 4px 6px;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.group-tabs__tab > button:first-child {
+  all: unset;
+  box-sizing: border-box;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-body);
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.group-tabs__count {
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.group-tabs__tab--active {
+  background: var(--color-weak-background);
+  border-color: var(--color-weak-background);
+}
+
+.group-tabs__tab--active > button:first-child {
+  color: var(--color-weak-foreground);
+}
+
+.group-tabs__remove {
+  all: unset;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 13px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.group-tabs__remove:hover {
+  background: var(--color-severity-high-bg);
+  color: var(--color-severity-high-fg);
+}
+
+.watchlist-add-to-group {
+  border: 1px dashed var(--color-border);
+  background: transparent;
+  color: var(--color-body);
+  border-radius: var(--radius-control);
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.watchlist-add-to-group:hover {
+  background: var(--color-canvas);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.watchlist-empty {
+  background: var(--color-canvas);
+  border-radius: var(--radius-card);
+  box-shadow: 0 1px 2px rgba(25, 31, 40, 0.04), 0 4px 16px rgba(25, 31, 40, 0.05);
+  padding: var(--space-md);
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-muted);
+  margin: 0;
+  animation: fade-in var(--transition-base) both;
 }
