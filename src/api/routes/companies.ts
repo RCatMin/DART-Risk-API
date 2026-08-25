@@ -8,7 +8,16 @@ import { errorBody, ok } from "../response.js";
 export const companiesRouter = Router();
 
 // GET /companies가 쿼리스트링별로 캐시되므로, 쓰기 후엔 가능한 변형을 전부 지운다.
-const COMPANIES_LIST_CACHE_PATHS = ["/api/companies", "/api/companies?isWatched=true", "/api/companies?isWatched=false", "/api/companies?isWatched=all"];
+const COMPANIES_LIST_CACHE_PATHS = [
+  "/api/companies",
+  "/api/companies?isWatched=true",
+  "/api/companies?isWatched=false",
+  "/api/companies?isWatched=all",
+  "/api/companies/risk-summary",
+  "/api/companies/risk-summary?isWatched=true",
+  "/api/companies/risk-summary?isWatched=false",
+  "/api/companies/risk-summary?isWatched=all",
+];
 
 // GET /api/companies?isWatched=true|false|all
 companiesRouter.get("/companies", async (req, res) => {
@@ -36,6 +45,35 @@ companiesRouter.get("/companies/search", async (req, res) => {
   const results = searchCorpCode(corpCodeMap, q);
 
   res.json(ok(results));
+});
+
+// GET /api/companies/risk-summary?isWatched=true|false|all
+// 회사별 "현재 리스크 상태" 하나(가장 심각하고, 동률이면 가장 최근인 것)를 정확히 계산해서 돌려준다.
+// /api/risk-flags?limit=N처럼 전체를 최신순으로 잘라서 회사별로 매핑하면, 데이터가 많아질수록
+// 특정 회사의 실제 리스크가 다른 회사(또는 같은 회사의 다른 공시)의 최신 not_applicable 레코드에
+// 밀려 잘려나가는 문제가 생긴다 — 그래서 회사마다 독립적으로 쿼리한다.
+companiesRouter.get("/companies/risk-summary", async (req, res) => {
+  const isWatchedParam = req.query.isWatched;
+  const where = isWatchedParam === "all" ? {} : { isWatched: isWatchedParam !== "false" };
+
+  const companies = await prisma.company.findMany({ where, orderBy: { corpName: "asc" } });
+
+  const summaries = await Promise.all(
+    companies.map(async (company) => {
+      const riskFlag = await prisma.riskFlag.findFirst({
+        where: { disclosure: { corpCode: company.corpCode }, riskType: { not: "not_applicable" } },
+        orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
+        include: {
+          disclosure: {
+            select: { rceptNo: true, reportNm: true, rceptDt: true, corpCode: true },
+          },
+        },
+      });
+      return { company, riskFlag };
+    }),
+  );
+
+  res.json(ok(summaries));
 });
 
 // POST /api/companies — 워치리스트에 종목 추가 (신규든 기존이든).

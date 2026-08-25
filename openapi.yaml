@@ -98,6 +98,43 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /api/companies/risk-summary:
+    get:
+      summary: 회사별 현재 리스크 상태 (가장 심각하고 동률이면 가장 최근인 것 1건)
+      description: >
+        `/api/risk-flags?limit=`처럼 전체를 최신순으로 잘라서 회사별로 매핑하면 데이터가 많아질수록
+        특정 회사의 실제 리스크가 다른 레코드에 밀려 잘려나갈 수 있어, 회사마다 독립적으로 계산한다.
+      parameters:
+        - name: isWatched
+          in: query
+          schema:
+            type: string
+            enum: [true, false, all]
+            default: "true"
+      responses:
+        "200":
+          description: 회사별 리스크 요약
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            company:
+                              $ref: "#/components/schemas/Company"
+                            riskFlag:
+                              nullable: true
+                              allOf:
+                                - $ref: "#/components/schemas/RiskFlag"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /api/companies/search:
     get:
       summary: 워치리스트에 추가할 종목 검색 (DART 전체 상장사 대상)
