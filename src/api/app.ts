@@ -24,8 +24,8 @@ export function createApp() {
 
   app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
-  // 조회 API는 전부 API 키 필요 + 캐시 적용
-  app.use("/api", requireApiKey, cacheResponse());
+  // 조회 API는 전부 API 키 필요 + 캐시 적용 (캐시는 GET에만 적용됨)
+  app.use("/api", express.json(), requireApiKey, cacheResponse());
   app.use("/api", companiesRouter);
   app.use("/api", disclosuresRouter);
   app.use("/api", riskFlagsRouter);

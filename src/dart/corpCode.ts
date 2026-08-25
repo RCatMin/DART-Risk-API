@@ -40,3 +40,22 @@ export async function fetchCorpCodeMap(): Promise<Map<string, CorpCodeEntry>> {
   }
   return map;
 }
+
+// 종목명(부분 일치) 또는 종목코드(정확히 일치)로 상장사를 찾는다.
+// 워치리스트에 새 종목을 추가하기 전, 사용자가 후보를 고를 수 있게 하는 용도.
+export function searchCorpCode(map: Map<string, CorpCodeEntry>, query: string): CorpCodeEntry[] {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+
+  const byStockCode = map.get(trimmed);
+  if (byStockCode) return [byStockCode];
+
+  const results: CorpCodeEntry[] = [];
+  for (const entry of map.values()) {
+    if (entry.corpName.includes(trimmed)) {
+      results.push(entry);
+      if (results.length >= 20) break;
+    }
+  }
+  return results;
+}
