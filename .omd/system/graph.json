@@ -1,0 +1,481 @@
+{
+  "$schema": "https://oh-my-design.kr/schema/design-system-graph-v2.schema.json",
+  "components_states": {
+    "components": [
+      {
+        "anatomy": [
+          "label"
+        ],
+        "id": "risk-badge",
+        "interaction": {
+          "kind": "non-interactive",
+          "reason": "클릭 동작이 없는 정보 표시 전용 요소"
+        },
+        "semantics": "리스크 심각도를 색과 텍스트로 함께 표시하는 배지",
+        "states": [
+          "default"
+        ],
+        "token_refs": [
+          "color.severity-high-bg",
+          "color.severity-high-fg",
+          "color.severity-medium-bg",
+          "color.severity-medium-fg",
+          "color.severity-low-bg",
+          "color.severity-low-fg",
+          "radius.chip"
+        ],
+        "variants": [
+          "HIGH",
+          "MEDIUM",
+          "LOW",
+          "NONE"
+        ]
+      },
+      {
+        "anatomy": [
+          "company-name",
+          "corp-code",
+          "report-type",
+          "risk-badge",
+          "confidence-value",
+          "source-snippet",
+          "disclaimer-chip"
+        ],
+        "id": "risk-card",
+        "interaction": {
+          "kind": "non-interactive",
+          "reason": "카드 자체는 정보 표시용이며 이동 동작은 상위 목록 행에서 발생한다"
+        },
+        "semantics": "워치리스트 한 종목의 리스크 상세를 보여주는 카드",
+        "states": [
+          "default"
+        ],
+        "token_refs": [
+          "color.surface",
+          "radius.card"
+        ]
+      },
+      {
+        "anatomy": [
+          "company-name",
+          "corp-code",
+          "report-type",
+          "risk-type",
+          "risk-badge"
+        ],
+        "id": "watchlist-row",
+        "interaction": {
+          "kind": "interactive",
+          "state_applicability": {
+            "default": {
+              "applicability": "applicable"
+            },
+            "disabled": {
+              "applicability": "not-applicable",
+              "reason": "목록 행은 항상 조회 가능하며 비활성화 상태가 없다"
+            },
+            "error": {
+              "applicability": "not-applicable",
+              "reason": "조회 실패는 페이지 레벨 에러로 처리하고 행 단위 에러 상태는 없다"
+            },
+            "focus-visible": {
+              "applicability": "applicable"
+            },
+            "hover": {
+              "applicability": "applicable"
+            },
+            "loading": {
+              "applicability": "not-applicable",
+              "reason": "데이터는 백엔드 파이프라인이 미리 채워두므로 행 단위 로딩 상태가 없다"
+            },
+            "success": {
+              "applicability": "not-applicable",
+              "reason": "쓰기 동작이 없으므로 성공 상태가 없다"
+            }
+          }
+        },
+        "semantics": "워치리스트 목록의 한 행, 클릭 시 상세로 이동",
+        "states": [
+          "default",
+          "hover",
+          "focus-visible"
+        ],
+        "token_refs": [
+          "color.border"
+        ],
+        "variants": [
+          "has-risk",
+          "no-risk"
+        ]
+      },
+      {
+        "anatomy": [
+          "label"
+        ],
+        "id": "disclaimer-chip",
+        "interaction": {
+          "kind": "non-interactive",
+          "reason": "항상 표시되는 고지 문구로 상호작용이 없다"
+        },
+        "semantics": "투자 자문이 아니라는 상시 고지",
+        "states": [
+          "default"
+        ],
+        "token_refs": [
+          "color.weak-background",
+          "color.weak-foreground"
+        ]
+      }
+    ],
+    "rules": [
+      "disclaimer-chip은 리스크 정보 근처에서 항상 렌더링되어야 하며 조건부로 숨길 수 없다",
+      "risk-badge는 색상만으로 심각도를 전달하지 않고 HIGH/MEDIUM/LOW 텍스트 라벨을 항상 함께 표시한다"
+    ]
+  },
+  "content_locales": {
+    "locales": [
+      {
+        "locale": "ko",
+        "rules": [
+          "모든 화면은 한국어를 기본으로 한다",
+          "금액은 원화 단위를 명시한다"
+        ],
+        "status": "supported"
+      }
+    ],
+    "terminology": {
+      "리스크 플래그": "자동 탐지된 잠재 리스크 항목",
+      "워치리스트": "모니터링 대상으로 등록된 종목 목록",
+      "확신도": "룰 기반 분류기의 판단 신뢰도 — 투자 신뢰도가 아님"
+    },
+    "voice": [
+      "차분함",
+      "다정하지만 절제됨",
+      "금융 리스크를 정확하고 직접적으로 설명"
+    ]
+  },
+  "experience": {
+    "avoid": [
+      "매수/매도 추천으로 읽힐 수 있는 문구·색상 (예: LOW 심각도에 초록색 사용)",
+      "실시간 웹소켓 알림 UI",
+      "전 상장사 대상 실시간 감시 화면",
+      "5개 리스크 유형·2개 보고서 타입 외의 데이터 노출"
+    ],
+    "design_direction": [
+      "calm",
+      "minimal",
+      "trustworthy",
+      "friendly-but-restrained"
+    ],
+    "primary_tasks": [
+      "워치리스트 종목별 최신 리스크 플래그를 빠르게 훑어본다",
+      "리스크 상세(확신도·원문 근거 스니펫)를 확인한다",
+      "심각도(HIGH/MEDIUM/LOW)로 우선순위를 판단한다"
+    ],
+    "principles": [
+      "조회 전용 — 대시보드에서 데이터를 쓰거나 수정하지 않는다",
+      "스코프를 넓히지 않는다 — 5개 리스크 유형, 2개 보고서 타입, 워치리스트 종목 외에는 표시하지 않는다",
+      "disclaimer는 타협 불가 — 어떤 화면에서도 투자 자문처럼 보이는 문구·UI를 만들지 않는다",
+      "확신도(confidence)와 원문 근거(source_snippet)를 숨기지 않고 보여줘서 룰 기반 분류의 한계를 사용자가 스스로 판단하게 한다"
+    ],
+    "summary": "워치리스트 종목(50~100개)의 사업보고서·감사보고서에서 자동 탐지된 리스크 플래그를 조회 전용으로 신뢰성 있게 보여준다. 백엔드가 이미 수집·분류를 끝낸 데이터를 노출하는 것이 성공 기준이며, 투자 자문으로 오인되지 않아야 한다."
+  },
+  "foundations": {
+    "contrast_pairs": [
+      {
+        "background": "color.canvas",
+        "foreground": "color.foreground",
+        "minimum_ratio": 4.5
+      },
+      {
+        "background": "color.canvas",
+        "foreground": "color.body",
+        "minimum_ratio": 4.5
+      },
+      {
+        "background": "color.weak-background",
+        "foreground": "color.weak-foreground",
+        "minimum_ratio": 4.5
+      }
+    ],
+    "reduced_motion": true,
+    "rules": [
+      "색상은 리스크 심각도(HIGH/MEDIUM/LOW) 의미로만 사용하고 매수/매도 뉘앙스를 주지 않는다",
+      "LOW 심각도에는 초록을 쓰지 않는다 — '안전하다/사도 된다'로 오인될 수 있다",
+      "심각도는 색만으로 구분하지 않고 항상 텍스트 라벨을 함께 표시한다"
+    ],
+    "tokens": {
+      "color.body": {
+        "$description": "Toss 실측 본문 텍스트",
+        "$type": "color",
+        "$value": "#4e5968"
+      },
+      "color.border": {
+        "$description": "Toss 실측 구분선",
+        "$type": "color",
+        "$value": "#e5e8eb"
+      },
+      "color.canvas": {
+        "$description": "Toss 실측 canvas",
+        "$type": "color",
+        "$value": "#ffffff"
+      },
+      "color.danger": {
+        "$description": "Toss 실측 danger — HIGH 심각도의 근거",
+        "$type": "color",
+        "$value": "#e42939"
+      },
+      "color.foreground": {
+        "$description": "Toss 실측 최강조 텍스트",
+        "$type": "color",
+        "$value": "#191f28"
+      },
+      "color.muted": {
+        "$description": "Toss 실측 보조 텍스트 — LOW 심각도에도 재사용",
+        "$type": "color",
+        "$value": "#8b95a1"
+      },
+      "color.primary": {
+        "$description": "Toss TDS 실측 primary — 리스크 유형과 무관한 브랜드 액션 색",
+        "$type": "color",
+        "$value": "#3182f6"
+      },
+      "color.primary-hover": {
+        "$description": "Toss TDS 실측 primary-hover",
+        "$type": "color",
+        "$value": "#2272eb"
+      },
+      "color.severity-high-bg": {
+        "$description": "danger(#e42939)를 Toss 자체 weak/strong 공식으로 확장한 값 — agent 제안, 2026-08-25 스와치에서 사용자 확인",
+        "$type": "color",
+        "$value": "#fdecec"
+      },
+      "color.severity-high-fg": {
+        "$description": "Toss 실측 danger 그대로 사용",
+        "$type": "color",
+        "$value": "#e42939"
+      },
+      "color.severity-low-bg": {
+        "$description": "= color.surface 재사용, 초록 대신 중립색으로 매수 뉘앙스 방지",
+        "$type": "color",
+        "$value": "#f2f4f6"
+      },
+      "color.severity-low-fg": {
+        "$description": "= color.muted 재사용",
+        "$type": "color",
+        "$value": "#8b95a1"
+      },
+      "color.severity-medium-bg": {
+        "$description": "Toss에 없는 amber — 범용 컴플라이언스 관례, 사용자 승인(2026-08-25)",
+        "$type": "color",
+        "$value": "#fff6e5"
+      },
+      "color.severity-medium-fg": {
+        "$description": "위와 동일 provenance",
+        "$type": "color",
+        "$value": "#b26a00"
+      },
+      "color.surface": {
+        "$description": "Toss 실측 카드/섹션 배경",
+        "$type": "color",
+        "$value": "#f2f4f6"
+      },
+      "color.weak-background": {
+        "$description": "Toss 실측 weak 배경 — disclaimer 칩에 사용",
+        "$type": "color",
+        "$value": "#e8f3ff"
+      },
+      "color.weak-foreground": {
+        "$description": "Toss 실측 weak 전경 — disclaimer 칩 텍스트",
+        "$type": "color",
+        "$value": "#1b64da"
+      },
+      "radius.card": {
+        "$description": "Toss 실측 rounded, 카드용",
+        "$type": "dimension",
+        "$value": 16
+      },
+      "radius.chip": {
+        "$description": "Toss 실측 rounded 계열, 배지/칩용",
+        "$type": "dimension",
+        "$value": 14
+      },
+      "radius.control": {
+        "$description": "Toss 실측 rounded.sm~md 대표값",
+        "$type": "dimension",
+        "$value": 8
+      },
+      "spacing.lg": {
+        "$description": "Toss 실측",
+        "$type": "dimension",
+        "$value": 24
+      },
+      "spacing.md": {
+        "$description": "Toss 실측",
+        "$type": "dimension",
+        "$value": 16
+      },
+      "spacing.sm": {
+        "$description": "Toss 실측",
+        "$type": "dimension",
+        "$value": 8
+      },
+      "spacing.xs": {
+        "$description": "Toss 실측",
+        "$type": "dimension",
+        "$value": 4
+      }
+    }
+  },
+  "governance": {
+    "change_policy": [
+      "DESIGN.md 변경은 omd:apply/omd:learn을 통해서만 반영한다",
+      "새 브랜드 색상 추가는 프로젝트 오너 승인 후에만 채택한다"
+    ],
+    "decisions": [
+      {
+        "evidence": [
+          ".claude/data/references/toss/DESIGN.md"
+        ],
+        "path": "foundations.tokens.color.primary.$value",
+        "source_class": "verified-reference-inspiration",
+        "value": "#3182f6"
+      },
+      {
+        "evidence": [
+          ".claude/data/references/toss/DESIGN.md"
+        ],
+        "path": "foundations.tokens.color.danger.$value",
+        "source_class": "verified-reference-inspiration",
+        "value": "#e42939"
+      },
+      {
+        "evidence": [
+          ".claude/data/references/toss/DESIGN.md",
+          ".omd/decisions/phase8-severity-colors.md"
+        ],
+        "path": "foundations.tokens.color.severity-high-bg.$value",
+        "source_class": "agent-proposed-greenfield-decision",
+        "value": "#fdecec"
+      },
+      {
+        "evidence": [
+          ".omd/decisions/phase8-severity-colors.md"
+        ],
+        "path": "foundations.tokens.color.severity-medium-bg.$value",
+        "source_class": "agent-proposed-greenfield-decision",
+        "value": "#fff6e5"
+      },
+      {
+        "evidence": [
+          "CLAUDE.md",
+          "PRODUCT.md"
+        ],
+        "path": "experience.avoid",
+        "source_class": "repository-fact",
+        "value": [
+          "매수/매도 추천으로 읽힐 수 있는 문구·색상 (예: LOW 심각도에 초록색 사용)",
+          "실시간 웹소켓 알림 UI",
+          "전 상장사 대상 실시간 감시 화면",
+          "5개 리스크 유형·2개 보고서 타입 외의 데이터 노출"
+        ]
+      },
+      {
+        "evidence": [
+          "CLAUDE.md",
+          "PRODUCT.md"
+        ],
+        "path": "content_locales.locales",
+        "source_class": "repository-fact",
+        "value": [
+          {
+            "locale": "ko",
+            "rules": [
+              "모든 화면은 한국어를 기본으로 한다",
+              "금액은 원화 단위를 명시한다"
+            ],
+            "status": "supported"
+          }
+        ]
+      },
+      {
+        "evidence": [
+          "PRODUCT.md"
+        ],
+        "path": "experience.primary_tasks",
+        "source_class": "repository-fact",
+        "value": [
+          "워치리스트 종목별 최신 리스크 플래그를 빠르게 훑어본다",
+          "리스크 상세(확신도·원문 근거 스니펫)를 확인한다",
+          "심각도(HIGH/MEDIUM/LOW)로 우선순위를 판단한다"
+        ]
+      }
+    ],
+    "priority": [
+      "사용자의 명시 지시",
+      "저장소 기존 사실(PRODUCT.md/CLAUDE.md)",
+      "toss 레퍼런스 검증값",
+      "에이전트 제안 중 명시 승인분"
+    ],
+    "unknown_policy": "absent-at-smallest-unresolved-boundary"
+  },
+  "identity": {
+    "kind": "project-system",
+    "name": "DART 리스크 대시보드",
+    "scope": "워치리스트 상장사의 자동 탐지 리스크 플래그를 조회 전용으로 보여주는 Phase 8 React+Vite 대시보드"
+  },
+  "layout_platforms": {
+    "minimum_width_px": 320,
+    "platforms": [
+      {
+        "id": "web",
+        "rules": [
+          "React + Vite SPA, 데스크톱·모바일 웹 브라우저를 지원한다"
+        ]
+      }
+    ],
+    "reflow_zoom_percent": 200,
+    "rules": [
+      "워치리스트는 반응형 카드/리스트로 표시하고 가로 스크롤을 만들지 않는다",
+      "표(테이블) 레이아웃 대신 카드형 리스트를 우선한다 — 참고 레퍼런스(toss)가 카드 중심"
+    ]
+  },
+  "projection": {
+    "locale": "en",
+    "path": "DESIGN.md",
+    "sha256": "265b5437c415b632d5568171db27a87b4d8317b40c58f231b6196d9c82b6e212"
+  },
+  "schema_version": "2.0.0",
+  "typography_assets": {
+    "assets": [],
+    "roles": [
+      {
+        "family": "Toss Product Sans, Pretendard, Apple SD Gothic Neo, sans-serif",
+        "id": "body",
+        "line_height": "24px",
+        "size": "16px",
+        "usage": "카드/목록 기본 본문",
+        "weight": 400
+      },
+      {
+        "family": "Toss Product Sans, Pretendard, Apple SD Gothic Neo, sans-serif",
+        "id": "body-small",
+        "line_height": "21px",
+        "size": "14px",
+        "usage": "보조 텍스트·캡션·확신도 라벨",
+        "weight": 400
+      },
+      {
+        "family": "Toss Product Sans, Pretendard, Apple SD Gothic Neo, sans-serif",
+        "id": "heading",
+        "line_height": "36px",
+        "size": "24px",
+        "usage": "섹션/카드 제목",
+        "weight": 600
+      }
+    ],
+    "rules": [
+      "Toss Product Sans 라이선스 미확인 — 웹 배포 시 Pretendard 또는 시스템 폰트로 대체하고 자간만 유지한다"
+    ]
+  }
+}

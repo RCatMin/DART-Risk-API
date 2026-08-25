@@ -60,3 +60,19 @@ JobLog      { job_id, job_type, status, duration_ms, error_message }
 3. Phase 종료 후에는 에러 처리·재시도·보안 관점에서 self-review를 한 번 더 수행한다.
 4. 커밋은 Phase 단위로 하고, 커밋 메시지에 Phase 번호를 명시한다 (예: `feat(phase-1): 공시목록 수집 파이프라인`).
 5. API 키/시크릿은 `.env`에서만 관리하고 코드에 하드코딩하지 않는다. `.env.example`은 항상 최신 상태로 유지한다.
+
+<!-- omd:start v=1 hash=a0905ab87d60 -->
+# Design System (oh-my-design)
+
+Read the standalone design contract at **@./DESIGN.md** before any UI,
+styling, microcopy, or motion work. When a valid adopted Core v2
+`.omd/system/manifest.json` declares `profile: portable-core` and binds exact
+graph/projection hashes, the System Graph is machine authority and DESIGN.md is
+its standalone projection. A migration candidate is never adopted authority.
+
+Preference log (pending corrections): @./.omd/preferences.md
+
+Precedence: pending explicit preference corrections > adopted Bound System
+graph/standalone DESIGN.md > your defaults. Fold pending corrections into the
+graph and regenerate the projection before clearing them.
+<!-- omd:end -->

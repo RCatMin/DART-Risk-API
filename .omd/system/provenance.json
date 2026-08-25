@@ -1,0 +1,84 @@
+{
+  "decisions": [
+    {
+      "evidence": [
+        ".claude/data/references/toss/DESIGN.md"
+      ],
+      "path": "foundations.tokens.color.primary.$value",
+      "source_class": "verified-reference-inspiration",
+      "value": "#3182f6"
+    },
+    {
+      "evidence": [
+        ".claude/data/references/toss/DESIGN.md"
+      ],
+      "path": "foundations.tokens.color.danger.$value",
+      "source_class": "verified-reference-inspiration",
+      "value": "#e42939"
+    },
+    {
+      "evidence": [
+        ".claude/data/references/toss/DESIGN.md",
+        ".omd/decisions/phase8-severity-colors.md"
+      ],
+      "path": "foundations.tokens.color.severity-high-bg.$value",
+      "source_class": "agent-proposed-greenfield-decision",
+      "value": "#fdecec"
+    },
+    {
+      "evidence": [
+        ".omd/decisions/phase8-severity-colors.md"
+      ],
+      "path": "foundations.tokens.color.severity-medium-bg.$value",
+      "source_class": "agent-proposed-greenfield-decision",
+      "value": "#fff6e5"
+    },
+    {
+      "evidence": [
+        "CLAUDE.md",
+        "PRODUCT.md"
+      ],
+      "path": "experience.avoid",
+      "source_class": "repository-fact",
+      "value": [
+        "매수/매도 추천으로 읽힐 수 있는 문구·색상 (예: LOW 심각도에 초록색 사용)",
+        "실시간 웹소켓 알림 UI",
+        "전 상장사 대상 실시간 감시 화면",
+        "5개 리스크 유형·2개 보고서 타입 외의 데이터 노출"
+      ]
+    },
+    {
+      "evidence": [
+        "CLAUDE.md",
+        "PRODUCT.md"
+      ],
+      "path": "content_locales.locales",
+      "source_class": "repository-fact",
+      "value": [
+        {
+          "locale": "ko",
+          "rules": [
+            "모든 화면은 한국어를 기본으로 한다",
+            "금액은 원화 단위를 명시한다"
+          ],
+          "status": "supported"
+        }
+      ]
+    },
+    {
+      "evidence": [
+        "PRODUCT.md"
+      ],
+      "path": "experience.primary_tasks",
+      "source_class": "repository-fact",
+      "value": [
+        "워치리스트 종목별 최신 리스크 플래그를 빠르게 훑어본다",
+        "리스크 상세(확신도·원문 근거 스니펫)를 확인한다",
+        "심각도(HIGH/MEDIUM/LOW)로 우선순위를 판단한다"
+      ]
+    }
+  ],
+  "design_md_sha256": "265b5437c415b632d5568171db27a87b4d8317b40c58f231b6196d9c82b6e212",
+  "graph_sha256": "f12307103855078b2b578f3c0e11406b83bf2fd6786ed48e8e45dc31b557c7f2",
+  "schema_version": "2.0.0"
+}

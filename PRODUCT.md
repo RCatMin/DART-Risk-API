@@ -46,7 +46,7 @@ React + Vite (SPA). Phase 7에서 만든 `openapi.yaml`을 백엔드 API 계약�
 
 - 실제 시드 데이터 존재: 워치리스트 79개 기업(예: 삼성전자, corp_code `00126380`), 공시 249건, 리스크플래그 679건 — 화면 설계 시 이 실데이터를 그대로 사용 가능.
 - API 계약 문서: `openapi.yaml`.
-- 지금까지의 아키텍처·캐시 전략 문서: `DESIGN.md`.
+- 지금까지의 아키텍처·캐시 전략 문서: `ARCHITECTURE.md` (Phase 7 산출물, 이전 파일명 `DESIGN.md`에서 이름 변경 — `DESIGN.md`는 이제 Phase 8 브랜드 디자인 시스템 문서 전용).
 - Phase별 변경 로그: `PHASE1_LOG.md` ~ `PHASE7_LOG.md`.
 
 ## Product Principles

@@ -1,88 +1,279 @@
-# 설계 문서 — dart-risk-api
+# DART 리스크 대시보드 Design System
 
-- **date**: 2026-08-24
-- **phase**: 7 / 8 기준 스냅샷
+<!-- design-md:section experience -->
+## 1. Experience
 
-Phase 0~6까지 쌓인 아키텍처를 한 곳에 정리하고, Phase 7 k6 부하 테스트 결과와 병목 분석을 남긴다.
+<!-- design-md:claim scope kind=product-surface lang=en -->
+### Scope
 
-## 1. 전체 아키텍처
+워치리스트 종목(50~100개)의 사업보고서·감사보고서에서 자동 탐지된 리스크 플래그를 조회 전용으로 신뢰성 있게 보여준다. 백엔드가 이미 수집·분류를 끝낸 데이터를 노출하는 것이 성공 기준이며, 투자 자문으로 오인되지 않아야 한다.
+<!-- design-md:claim-end -->
 
-```
-[DART Open API] ---collect---> [Postgres: Company/Disclosure] --extract--> [rawText 저장]
-                                                                     |
-                                                                  classify
-                                                                     v
-                                                        [Postgres: RiskFlag]
+<!-- design-md:claim primary-tasks kind=user-outcomes count=3 lang=en -->
+### Primary tasks
 
-BullMQ 큐 3개(collect-disclosures / extract-text / classify-risk)가 위 파이프라인을 잇는다.
-각 단계는 완료 시 다음 단계 job을 스스로 enqueue한다 (collect → extract → classify 체이닝).
+- 워치리스트 종목별 최신 리스크 플래그를 빠르게 훑어본다
 
-[Express API] --requireApiKey--> [Redis 캐시 30s] --cache miss--> [Postgres 조회]
-```
+- 리스크 상세(확신도·원문 근거 스니펫)를 확인한다
 
-- **수집~분류 파이프라인**(Phase 1~4): 워치리스트 80개 기업 × 사업보고서/감사보고서만 대상. 룰 기반 리스크 분류(Claude API는 크레딧 확보 전까지 대체).
-- **조회 API**(Phase 5): 파이프라인이 채운 데이터를 읽기 전용으로 노출. 쓰기 경로는 API에 없음 — 항상 워커가 채움.
-- **큐/재시도**(Phase 4): exponential backoff 3회 → dead-letter. 워커 프로세스가 개별 job 실패로 죽지 않도록 전역 예외 핸들러 보유.
-- **로깅**(Phase 6): pino로 구조화. `JobLog` 테이블에 job 시도별 실행 이력, API는 pino-http로 요청 로그.
+- 심각도(HIGH/MEDIUM/LOW)로 우선순위를 판단한다
+<!-- design-md:claim-end -->
 
-## 2. 캐시 전략
+### Design direction
 
-`cacheResponse()` 미들웨어가 `res.json`을 감싸서 `/api` 전체에 적용됨(라우터 코드 무변경). 캐시 키는 `req.originalUrl` — 즉 **쿼리 파라미터까지 포함한 전체 URL**이 키다. 이 설계의 함의:
+- calm
 
-- 동일 쿼리 반복 호출(대시보드가 같은 화면을 계속 갱신하는 경우)은 TTL(30초) 동안 거의 다 캐시로 처리됨.
-- 페이지네이션(`offset=`)처럼 쿼리가 매번 바뀌는 접근 패턴은 캐시 키가 매번 달라져 MISS가 잦음 — 아래 부하 테스트에서 실측.
+- minimal
 
-## 3. Phase 7 — k6 부하 테스트
+- trustworthy
 
-### 3.1 시나리오 설계
+- friendly-but-restrained
 
-같은 서버 자원을 두고 "캐시가 거의 항상 먹히는 접근 패턴"과 "캐시 키가 매번 달라지는 접근 패턴"을 시간을 나눠 비교했다.
+### Principles
 
-| 시나리오 | 엔드포인트 | 접근 패턴 | 목적 |
-|---|---|---|---|
-| `cache_hit` | `GET /api/companies/{corpCode}/disclosures` | 항상 동일한 corpCode 조회 | 캐시 HIT 상태의 응답시간 측정 |
-| `cache_miss` | `GET /api/risk-flags?limit=10&offset=N` | `offset`을 VU/iteration 조합으로 매번 고유하게 생성 | 캐시가 전혀 안 먹히는 최악 케이스 측정 |
+- 조회 전용 — 대시보드에서 데이터를 쓰거나 수정하지 않는다
 
-두 시나리오 모두 `ramping-vus`로 0 → 20 VU까지 10초간 증가, 20초 유지, 5초간 감소 (각 35초, 총 70초). 실행: `npm run loadtest` (`.env`의 `API_KEY`/`PORT`를 읽어 k6에 전달).
+- 스코프를 넓히지 않는다 — 5개 리스크 유형, 2개 보고서 타입, 워치리스트 종목 외에는 표시하지 않는다
 
-> **시행착오**: 처음에는 `offset`을 0~500 사이 난수로 생성했는데, 요청량(초당 100건 이상)에 비해 난수 공간이 좁아서 30초 TTL 안에 같은 offset이 반복 등장 — "캐시 미스 시나리오"인데도 90%가 HIT로 나왔다. `offset = __VU * 100000 + __ITER`로 바꿔서 전체 실행에서 절대 겹치지 않게 수정한 뒤에야 의도한 대로 100% MISS가 나왔다.
+- disclaimer는 타협 불가 — 어떤 화면에서도 투자 자문처럼 보이는 문구·UI를 만들지 않는다
 
-### 3.2 결과 (로컬 M-series, Postgres/Redis 로컬)
+- 확신도(confidence)와 원문 근거(source_snippet)를 숨기지 않고 보여줘서 룰 기반 분류의 한계를 사용자가 스스로 판단하게 한다
 
-| 지표 | cache_hit | cache_miss |
+### Avoid
+
+- 매수/매도 추천으로 읽힐 수 있는 문구·색상 (예: LOW 심각도에 초록색 사용)
+
+- 실시간 웹소켓 알림 UI
+
+- 전 상장사 대상 실시간 감시 화면
+
+- 5개 리스크 유형·2개 보고서 타입 외의 데이터 노출
+
+<!-- design-md:section foundations -->
+## 2. Foundations
+
+<!-- design-md:claim foundations kind=rules-or-constraints lang=en -->
+### Semantic tokens
+
+- **color.body**: `#4e5968` — Toss 실측 본문 텍스트
+- **color.border**: `#e5e8eb` — Toss 실측 구분선
+- **color.canvas**: `#ffffff` — Toss 실측 canvas
+- **color.danger**: `#e42939` — Toss 실측 danger — HIGH 심각도의 근거
+- **color.foreground**: `#191f28` — Toss 실측 최강조 텍스트
+- **color.muted**: `#8b95a1` — Toss 실측 보조 텍스트 — LOW 심각도에도 재사용
+- **color.primary**: `#3182f6` — Toss TDS 실측 primary — 리스크 유형과 무관한 브랜드 액션 색
+- **color.primary-hover**: `#2272eb` — Toss TDS 실측 primary-hover
+- **color.severity-high-bg**: `#fdecec` — danger(#e42939)를 Toss 자체 weak/strong 공식으로 확장한 값 — agent 제안, 2026-08-25 스와치에서 사용자 확인
+- **color.severity-high-fg**: `#e42939` — Toss 실측 danger 그대로 사용
+- **color.severity-low-bg**: `#f2f4f6` — = color.surface 재사용, 초록 대신 중립색으로 매수 뉘앙스 방지
+- **color.severity-low-fg**: `#8b95a1` — = color.muted 재사용
+- **color.severity-medium-bg**: `#fff6e5` — Toss에 없는 amber — 범용 컴플라이언스 관례, 사용자 승인(2026-08-25)
+- **color.severity-medium-fg**: `#b26a00` — 위와 동일 provenance
+- **color.surface**: `#f2f4f6` — Toss 실측 카드/섹션 배경
+- **color.weak-background**: `#e8f3ff` — Toss 실측 weak 배경 — disclaimer 칩에 사용
+- **color.weak-foreground**: `#1b64da` — Toss 실측 weak 전경 — disclaimer 칩 텍스트
+- **radius.card**: `16` — Toss 실측 rounded, 카드용
+- **radius.chip**: `14` — Toss 실측 rounded 계열, 배지/칩용
+- **radius.control**: `8` — Toss 실측 rounded.sm~md 대표값
+- **spacing.lg**: `24` — Toss 실측
+- **spacing.md**: `16` — Toss 실측
+- **spacing.sm**: `8` — Toss 실측
+- **spacing.xs**: `4` — Toss 실측
+
+### Contrast pairs
+
+- color.foreground on color.canvas: minimum 4.5:1
+- color.body on color.canvas: minimum 4.5:1
+- color.weak-foreground on color.weak-background: minimum 4.5:1
+
+### Reduced motion
+
+Required.
+
+### Foundation rules
+
+- 색상은 리스크 심각도(HIGH/MEDIUM/LOW) 의미로만 사용하고 매수/매도 뉘앙스를 주지 않는다
+
+- LOW 심각도에는 초록을 쓰지 않는다 — '안전하다/사도 된다'로 오인될 수 있다
+
+- 심각도는 색만으로 구분하지 않고 항상 텍스트 라벨을 함께 표시한다
+<!-- design-md:claim-end -->
+
+<!-- design-md:section typography-assets -->
+## 3. Typography & Assets
+
+### Type roles
+
+| Role | Usage | Family | Size | Weight | Line height |
+|---|---|---|---|---|---|
+| body | 카드/목록 기본 본문 | Toss Product Sans, Pretendard, Apple SD Gothic Neo, sans-serif | 16px | 400 | 24px |
+| body-small | 보조 텍스트·캡션·확신도 라벨 | Toss Product Sans, Pretendard, Apple SD Gothic Neo, sans-serif | 14px | 400 | 21px |
+| heading | 섹션/카드 제목 | Toss Product Sans, Pretendard, Apple SD Gothic Neo, sans-serif | 24px | 600 | 36px |
+
+### Rules
+
+- Toss Product Sans 라이선스 미확인 — 웹 배포 시 Pretendard 또는 시스템 폰트로 대체하고 자간만 유지한다
+
+<!-- design-md:section components-states -->
+## 4. Components & States
+
+### Component: risk-badge
+
+**Semantics:** 리스크 심각도를 색과 텍스트로 함께 표시하는 배지
+
+- Anatomy: label
+- Variants: HIGH, MEDIUM, LOW, NONE
+- States: default
+- Token references: color.severity-high-bg, color.severity-high-fg, color.severity-medium-bg, color.severity-medium-fg, color.severity-low-bg, color.severity-low-fg, radius.chip
+
+- Interaction kind: non-interactive
+- Interaction reason: 클릭 동작이 없는 정보 표시 전용 요소
+
+### Component: risk-card
+
+**Semantics:** 워치리스트 한 종목의 리스크 상세를 보여주는 카드
+
+- Anatomy: company-name, corp-code, report-type, risk-badge, confidence-value, source-snippet, disclaimer-chip
+- States: default
+- Token references: color.surface, radius.card
+
+- Interaction kind: non-interactive
+- Interaction reason: 카드 자체는 정보 표시용이며 이동 동작은 상위 목록 행에서 발생한다
+
+### Component: watchlist-row
+
+**Semantics:** 워치리스트 목록의 한 행, 클릭 시 상세로 이동
+
+- Anatomy: company-name, corp-code, report-type, risk-type, risk-badge
+- Variants: has-risk, no-risk
+- States: default, hover, focus-visible
+- Token references: color.border
+
+- Interaction kind: interactive
+
+#### State applicability
+
+| State | Applicability | Reason |
 |---|---|---|
-| 실제 X-Cache 비율 | HIT 5286 / MISS 18 (99.7%) | MISS 4721 / HIT 0 (100%) |
-| p95 응답시간 | **4.52ms** | **21.77ms** |
-| 평균 응답시간 | 2.51ms | 15.70ms |
-| 최대 응답시간 | 50.77ms | 39.83ms |
+| default | applicable |  |
+| hover | applicable |  |
+| focus-visible | applicable |  |
+| disabled | not-applicable | 목록 행은 항상 조회 가능하며 비활성화 상태가 없다 |
+| loading | not-applicable | 데이터는 백엔드 파이프라인이 미리 채워두므로 행 단위 로딩 상태가 없다 |
+| error | not-applicable | 조회 실패는 페이지 레벨 에러로 처리하고 행 단위 에러 상태는 없다 |
+| success | not-applicable | 쓰기 동작이 없으므로 성공 상태가 없다 |
 
-전체(두 시나리오 합산, 70초):
+### Component: disclaimer-chip
 
-| 지표 | 값 |
+**Semantics:** 투자 자문이 아니라는 상시 고지
+
+- Anatomy: label
+- States: default
+- Token references: color.weak-background, color.weak-foreground
+
+- Interaction kind: non-interactive
+- Interaction reason: 항상 표시되는 고지 문구로 상호작용이 없다
+
+### Rules
+
+- disclaimer-chip은 리스크 정보 근처에서 항상 렌더링되어야 하며 조건부로 숨길 수 없다
+
+- risk-badge는 색상만으로 심각도를 전달하지 않고 HIGH/MEDIUM/LOW 텍스트 라벨을 항상 함께 표시한다
+
+<!-- design-md:section layout-platforms -->
+## 5. Layout & Platforms
+
+### Responsive constraints
+
+- Minimum supported width: 320px
+- Reflow target: 200% zoom
+
+### Layout rules
+
+- 워치리스트는 반응형 카드/리스트로 표시하고 가로 스크롤을 만들지 않는다
+
+- 표(테이블) 레이아웃 대신 카드형 리스트를 우선한다 — 참고 레퍼런스(toss)가 카드 중심
+
+### Platform: web
+
+- React + Vite SPA, 데스크톱·모바일 웹 브라우저를 지원한다
+
+<!-- design-md:section content-locales -->
+## 6. Content & Locales
+
+### Voice
+
+- 차분함
+
+- 다정하지만 절제됨
+
+- 금융 리스크를 정확하고 직접적으로 설명
+
+### Terminology
+
+| Term | Preferred form |
 |---|---|
-| 총 요청 수 | 10,026 |
-| 처리량 | 143.1 req/s |
-| 에러율 | **0.00%** (10,026 / 10,026 성공) |
-| 전체 p95 | 20.4ms |
+| 리스크 플래그 | 자동 탐지된 잠재 리스크 항목 |
+| 워치리스트 | 모니터링 대상으로 등록된 종목 목록 |
+| 확신도 | 룰 기반 분류기의 판단 신뢰도 — 투자 신뢰도가 아님 |
 
-```
-✓ http_req_duration{scenario:cache_hit}: p(95)<50ms   → 실측 4.52ms
-✓ http_req_duration{scenario:cache_miss}: p(95)<300ms → 실측 21.77ms
-✓ http_req_failed: rate<0.01                          → 실측 0.00%
-```
+### Locale: ko (supported)
 
-### 3.3 병목 분석
+- 모든 화면은 한국어를 기본으로 한다
+- 금액은 원화 단위를 명시한다
 
-- 캐시 HIT과 MISS의 p95 차이는 **~4.8배**(4.52ms → 21.77ms) — Phase 5에서 측정했던 단발성 curl 비교(~5.2~5.6배)와 방향이 일치. 부하 상태에서도 캐시 효과가 재현됨.
-- MISS 경로의 21.77ms는 로컬 Postgres 기준이라 절대값은 작지만, 병목은 `riskFlags` 쿼리의 `include: { disclosure: { company } }` 조인 — 필터 없이 넓은 범위를 스캔할 때 이 조인 비용이 커질 걸로 예상됨. 데이터 규모가 지금(공시 249건, 리스크플래그 679건)의 100배 이상으로 커지면 `disclosure_id`/`corp_code` 인덱스만으로는 부족해질 수 있어, 그 시점엔 `riskType`/`severity` 복합 인덱스 추가를 고려해야 함 — 지금 규모에서는 불필요한 최적화라 실행하지 않음.
-- 20 VU 수준에서는 Node 이벤트 루프나 Prisma 커넥션 풀이 병목이 되는 징후가 없었음(에러율 0%, p95가 VU 증가 구간에서도 안정적). 포트폴리오 스코프(워치리스트 80개, 소규모 조회 트래픽)에서는 이 이상의 동시성 테스트는 실효성이 낮다고 판단해 20 VU에서 멈춤.
+<!-- design-md:section governance -->
+## 7. Governance
 
-## 4. OpenAPI 스펙
+<!-- design-md:claim authority kind=project-system lang=en -->
+### Authority
 
-`openapi.yaml` (repo root) — Phase 5의 4개 엔드포인트(`/health` 포함)를 문서화. `npx swagger-cli validate openapi.yaml`로 문법 검증 통과. Phase 8 대시보드는 이 스펙을 API 계약으로 사용 (CLAUDE.md 명시 사항).
+This document is the project design contract for the declared scope.
+<!-- design-md:claim-end -->
 
-## 5. 알려진 한계 (의도적으로 남겨둠)
+<!-- design-md:claim application-priority order=prompt-fact,repository-fact,system-contract,reference-inspiration lang=en -->
+### Application priority
 
-- 룰 기반 분류기는 문맥 의존적 오탐(예: 일반적 회계정책 조항의 "소송" 언급)을 일부 놓칠 수 있음 — Claude API 크레딧 확보 시 보강 예정, 코드는 현재 구조 유지.
-- API 키 비교는 `!==` — 타이밍 공격 방어(`crypto.timingSafeEqual`) 없음. 포트폴리오 스코프에서 의도적으로 생략.
-- 레이트리밋 없음 — CLAUDE.md 요구사항 아님.
+1. Direct user instructions for the requested scope.
+2. Repository facts.
+3. This system contract.
+4. Reference inspiration.
+<!-- design-md:claim-end -->
+
+<!-- design-md:claim unknowns policy=absent-at-smallest-unresolved-boundary lang=en -->
+### Unknowns
+
+Omit only the smallest unresolved value or group. Do not replace it with a plausible default.
+<!-- design-md:claim-end -->
+
+<!-- design-md:claim changes policy=review-record-validate-before-adoption lang=en -->
+### Changes
+
+Record, review, and validate changes before adoption.
+<!-- design-md:claim-end -->
+
+### Project priority details
+
+1. 사용자의 명시 지시
+
+2. 저장소 기존 사실(PRODUCT.md/CLAUDE.md)
+
+3. toss 레퍼런스 검증값
+
+4. 에이전트 제안 중 명시 승인분
+
+### Additional change rules
+
+- DESIGN.md 변경은 omd:apply/omd:learn을 통해서만 반영한다
+
+- 새 브랜드 색상 추가는 프로젝트 오너 승인 후에만 채택한다
+
+### Decision provenance
+
+- foundations.tokens.color.primary.$value — verified-reference-inspiration; value: "#3182f6"; evidence: .claude/data/references/toss/DESIGN.md
+- foundations.tokens.color.danger.$value — verified-reference-inspiration; value: "#e42939"; evidence: .claude/data/references/toss/DESIGN.md
+- foundations.tokens.color.severity-high-bg.$value — agent-proposed-greenfield-decision; value: "#fdecec"; evidence: .claude/data/references/toss/DESIGN.md, .omd/decisions/phase8-severity-colors.md
+- foundations.tokens.color.severity-medium-bg.$value — agent-proposed-greenfield-decision; value: "#fff6e5"; evidence: .omd/decisions/phase8-severity-colors.md
+- experience.avoid — repository-fact; value: ["매수/매도 추천으로 읽힐 수 있는 문구·색상 (예: LOW 심각도에 초록색 사용)","실시간 웹소켓 알림 UI","전 상장사 대상 실시간 감시 화면","5개 리스크 유형·2개 보고서 타입 외의 데이터 노출"]; evidence: CLAUDE.md, PRODUCT.md
+- content_locales.locales — repository-fact; value: [{"locale":"ko","rules":["모든 화면은 한국어를 기본으로 한다","금액은 원화 단위를 명시한다"],"status":"supported"}]; evidence: CLAUDE.md, PRODUCT.md
+- experience.primary_tasks — repository-fact; value: ["워치리스트 종목별 최신 리스크 플래그를 빠르게 훑어본다","리스크 상세(확신도·원문 근거 스니펫)를 확인한다","심각도(HIGH/MEDIUM/LOW)로 우선순위를 판단한다"]; evidence: PRODUCT.md
