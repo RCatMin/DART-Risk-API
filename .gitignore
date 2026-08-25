@@ -6,3 +6,6 @@ node_modules
 /src/generated/prisma
 
 dist
+
+# 로컬 전용 (impeccable 디자인 스킬 설치, 검토 후 커밋 여부 결정)
+.claude
