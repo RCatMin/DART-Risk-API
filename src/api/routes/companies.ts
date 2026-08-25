@@ -48,7 +48,10 @@ companiesRouter.get("/companies/search", async (req, res) => {
 });
 
 // GET /api/companies/risk-summary?isWatched=true|false|all
-// 회사별 "현재 리스크 상태" 하나(가장 심각하고, 동률이면 가장 최근인 것)를 정확히 계산해서 돌려준다.
+// 회사별 "현재 리스크 상태"를 유형별로 하나씩(그 유형 내에서 가장 심각하고, 동률이면 가장 최근인 것)
+// 계산해서 돌려준다. 리스크 유형이 5개에서 7개로 늘어난 뒤로, 한 회사가 서로 다른 유형(예: 소송 +
+// 지분희석)의 리스크를 동시에 가질 수 있게 됐다 — "전체 중 1건만" 고르면 심각도가 같은 다른 유형이
+// 임의로 가려지는 문제가 생겨서, 유형별로 남긴다.
 // /api/risk-flags?limit=N처럼 전체를 최신순으로 잘라서 회사별로 매핑하면, 데이터가 많아질수록
 // 특정 회사의 실제 리스크가 다른 회사(또는 같은 회사의 다른 공시)의 최신 not_applicable 레코드에
 // 밀려 잘려나가는 문제가 생긴다 — 그래서 회사마다 독립적으로 쿼리한다.
@@ -60,7 +63,7 @@ companiesRouter.get("/companies/risk-summary", async (req, res) => {
 
   const summaries = await Promise.all(
     companies.map(async (company) => {
-      const riskFlag = await prisma.riskFlag.findFirst({
+      const flags = await prisma.riskFlag.findMany({
         where: { disclosure: { corpCode: company.corpCode }, riskType: { not: "not_applicable" } },
         orderBy: [{ severity: "desc" }, { createdAt: "desc" }],
         include: {
@@ -69,7 +72,14 @@ companiesRouter.get("/companies/risk-summary", async (req, res) => {
           },
         },
       });
-      return { company, riskFlag };
+
+      // 이미 severity desc, createdAt desc로 정렬돼 있으니, 유형별로 처음 나온 것이 그 유형의 대표 플래그다.
+      const byType = new Map<string, (typeof flags)[number]>();
+      for (const flag of flags) {
+        if (!byType.has(flag.riskType)) byType.set(flag.riskType, flag);
+      }
+
+      return { company, riskFlags: [...byType.values()] };
     }),
   );
 

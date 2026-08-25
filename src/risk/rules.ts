@@ -1,4 +1,10 @@
-export type RiskTypeKey = "audit_opinion_adverse" | "embezzlement" | "litigation" | "management_designation";
+export type RiskTypeKey =
+  | "audit_opinion_adverse"
+  | "embezzlement"
+  | "litigation"
+  | "management_designation"
+  | "insolvency"
+  | "dilution";
 export type Severity = "low" | "medium" | "high";
 
 export interface RuleFinding {
@@ -13,16 +19,44 @@ interface RiskCategory {
   type: RiskTypeKey;
   keywords: string[];
   severity: Severity;
+  boilerplateMarkers?: string[];
 }
 
-// CLAUDE.md에 고정된 5개 리스크 유형 중 "해당없음"을 제외한 4개.
+// CLAUDE.md에 고정된 7개 리스크 유형 중 "해당없음"을 제외한 6개.
 // 소송은 사업보고서 필수 기재 항목이라 "해당사항 없습니다" 식 보일러플레이트가 대부분이라
 // medium으로 두고, 나머지는 발생 자체가 심각한 이벤트라 high로 둔다.
+// insolvency/dilution은 주요사항보고서 스코프 추가로 새로 생김: 부도·회생절차·해산은 존속 자체를
+// 위협하는 이벤트라 high, 유상증자·전환사채/신주인수권부사채는 지분희석이라 관리종목지정 등보다는
+// 한 단계 낮은 medium으로 둔다.
 const RISK_CATEGORIES: RiskCategory[] = [
   { type: "audit_opinion_adverse", keywords: ["의견거절", "부적정의견", "한정의견", "감사범위제한"], severity: "high" },
   { type: "embezzlement", keywords: ["횡령", "배임"], severity: "high" },
   { type: "litigation", keywords: ["소송", "피소", "손해배상청구"], severity: "medium" },
-  { type: "management_designation", keywords: ["관리종목", "상장폐지", "거래정지"], severity: "high" },
+  {
+    type: "management_designation",
+    keywords: ["관리종목", "상장폐지", "거래정지"],
+    severity: "high",
+    // 전환사채/신주인수권부사채의 조기상환(풋옵션) 조건 조항에 "지배권 변동(Change of Control) 발생 시
+    // 상장폐지/거래정지되는 경우"처럼 가정법으로 등장한다 — 실제 상장폐지·관리종목 지정 사실이 아니라
+    // 채권 발행 당시 정한 계약조건 나열이므로 제외.
+    boilerplateMarkers: ["지배권 변동", "Change of Control"],
+  },
+  {
+    type: "insolvency",
+    keywords: ["부도", "회생절차", "파산신청", "해산사유"],
+    severity: "high",
+    // 재무제표 주석의 "신용위험" 회계정책 설명(매출채권 대손처리 기준)이나 신용등급 척도 정의문("투기적
+    // 성향... 부도발생 가능")에도 "부도"가 관용구로 등장한다 — 실제 부도 발생 사실과는 무관하므로 제외.
+    boilerplateMarkers: ["신용위험", "매출채권", "대손", "신용등급", "원리금"],
+  },
+  {
+    type: "dilution",
+    keywords: ["유상증자", "전환사채", "신주인수권부사채"],
+    severity: "medium",
+    // 사업보고서엔 정관상 신주인수권 배정 절차를 설명하는 상투적 조항이 항상 들어있는데,
+    // 실제 유상증자/전환사채 발행 결정과는 무관하므로 제외.
+    boilerplateMarkers: ["정관"],
+  },
 ];
 
 // 사업보고서는 "해당사항 없습니다" 식으로 키워드를 언급만 하고 부정하는 보일러플레이트가 많아서,
@@ -74,7 +108,9 @@ export function evaluateRisk(rawText: string): RuleFinding[] {
         if (!isFalsePositiveMatch(rawText, keyword, index) && !hasNegationNearby(rawText, index, keyword.length)) {
           const snippet = extractLine(rawText, index).slice(0, 500);
           const dedupeKey = `${category.type}:${snippet}`;
-          const isBoilerplate = BOILERPLATE_MARKERS.some((marker) => snippet.includes(marker));
+          const isBoilerplate =
+            BOILERPLATE_MARKERS.some((marker) => snippet.includes(marker)) ||
+            (category.boilerplateMarkers?.some((marker) => snippet.includes(marker)) ?? false);
           if (snippet.length >= MIN_SNIPPET_LENGTH && !isBoilerplate && !seenSnippets.has(dedupeKey)) {
             seenSnippets.add(dedupeKey);
             const group = byType.get(category.type) ?? [];

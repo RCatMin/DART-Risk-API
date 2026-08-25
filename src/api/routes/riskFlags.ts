@@ -11,7 +11,15 @@ riskFlagsRouter.get("/risk-flags", async (req, res) => {
   const limit = Math.min(Number(req.query.limit) || 20, 100);
   const offset = Number(req.query.offset) || 0;
 
-  const validRiskTypes = ["audit_opinion_adverse", "embezzlement", "litigation", "management_designation", "not_applicable"];
+  const validRiskTypes = [
+    "audit_opinion_adverse",
+    "embezzlement",
+    "litigation",
+    "management_designation",
+    "insolvency",
+    "dilution",
+    "not_applicable",
+  ];
   const validSeverities = ["low", "medium", "high"];
 
   if (typeof riskType === "string" && !validRiskTypes.includes(riskType)) {
