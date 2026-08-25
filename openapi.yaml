@@ -58,6 +58,133 @@ paths:
                           $ref: "#/components/schemas/Company"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    post:
+      summary: 워치리스트에 종목 추가
+      description: >
+        `/api/companies/search` 결과를 그대로 전달해서 새 종목을 워치리스트에 추가한다(신규/기존 모두 upsert).
+        추가 즉시 최근 공시를 받아오는 collect job이 등록된다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [corpCode, corpName, stockCode]
+              properties:
+                corpCode:
+                  type: string
+                corpName:
+                  type: string
+                stockCode:
+                  type: string
+      responses:
+        "201":
+          description: 추가된 기업
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Company"
+        "400":
+          description: 필수 필드 누락
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/companies/search:
+    get:
+      summary: 워치리스트에 추가할 종목 검색 (DART 전체 상장사 대상)
+      description: 우리 DB가 아니라 DART corpCode.xml을 직접 조회한다 — 아직 수집한 적 없는 종목도 찾기 위함.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: 종목코드(정확히 일치) 또는 회사명(부분 일치)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 검색 결과 (최대 20건)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            corpCode:
+                              type: string
+                            corpName:
+                              type: string
+                            stockCode:
+                              type: string
+        "400":
+          description: q 파라미터 누락
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /api/companies/{corpCode}:
+    patch:
+      summary: 워치리스트 포함/제외 토글
+      description: isWatched를 false→true로 바꾸면(재활성화) 그 사이 놓쳤을 공시를 받아오는 collect job이 다시 등록된다.
+      parameters:
+        - name: corpCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [isWatched]
+              properties:
+                isWatched:
+                  type: boolean
+      responses:
+        "200":
+          description: 변경된 기업
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/OkEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Company"
+        "400":
+          description: isWatched가 boolean이 아님
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          description: 존재하지 않는 corpCode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorEnvelope"
 
   /api/companies/{corpCode}/disclosures:
     get:
