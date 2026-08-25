@@ -1,0 +1,35 @@
+/*
+  DESIGN.md §2 Foundations의 semantic tokens를 그대로 옮긴 값입니다.
+  토큰 이름/값을 바꿀 때는 반드시 DESIGN.md도 함께 갱신하세요(omd:apply/omd:learn 경유).
+*/
+:root {
+  --color-primary: #3182f6;
+  --color-primary-hover: #2272eb;
+  --color-canvas: #ffffff;
+  --color-foreground: #191f28;
+  --color-body: #4e5968;
+  --color-muted: #8b95a1;
+  --color-surface: #f2f4f6;
+  --color-border: #e5e8eb;
+  --color-danger: #e42939;
+  --color-weak-background: #e8f3ff;
+  --color-weak-foreground: #1b64da;
+
+  --color-severity-high-bg: #fdecec;
+  --color-severity-high-fg: #e42939;
+  --color-severity-medium-bg: #fff6e5;
+  --color-severity-medium-fg: #b26a00;
+  --color-severity-low-bg: #f2f4f6;
+  --color-severity-low-fg: #8b95a1;
+
+  --radius-control: 8px;
+  --radius-chip: 14px;
+  --radius-card: 16px;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+
+  --font-family-ui: "Pretendard Variable", "Pretendard", -apple-system, "Apple SD Gothic Neo", sans-serif;
+}

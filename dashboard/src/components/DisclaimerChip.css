@@ -1,0 +1,9 @@
+.disclaimer-chip {
+  background: var(--color-weak-background);
+  color: var(--color-weak-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin: 0;
+}

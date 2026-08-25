@@ -1,0 +1,98 @@
+.watchlist-row {
+  list-style: none;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 8px;
+}
+
+.watchlist-row:last-child {
+  border-bottom: none;
+}
+
+/* 선택 배경을 li 전체(제외 버튼 영역 포함)에 채워서 오른쪽이 비어 보이지 않게 한다 */
+.watchlist-row--selected {
+  background: var(--color-weak-background);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.watchlist-row__button {
+  all: unset;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 88px;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.watchlist-row__remove {
+  all: unset;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.watchlist-row__remove:hover {
+  background: var(--color-severity-high-bg);
+  color: var(--color-severity-high-fg);
+}
+
+.watchlist-row__remove:focus-visible {
+  outline: 2px solid var(--color-primary);
+}
+
+.watchlist-row__button:hover {
+  background: var(--color-surface);
+}
+
+.watchlist-row--selected .watchlist-row__button:hover {
+  background: transparent;
+}
+
+.watchlist-row__button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+.watchlist-row__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-foreground);
+  min-width: 0;
+}
+
+.watchlist-row__name span {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.watchlist-row__type {
+  font-size: 13px;
+  color: var(--color-body);
+}
+
+/* 배지 칸을 고정 폭 + 우측 정렬해서, 행마다 배지 텍스트 길이가 달라도(예: MEDIUM vs —)
+   앞의 종목명/리스크유형 칸 경계가 행마다 밀리지 않게 한다. */
+.watchlist-row__button > .risk-badge {
+  justify-self: end;
+}

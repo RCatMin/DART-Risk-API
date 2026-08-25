@@ -1,0 +1,102 @@
+.risk-card {
+  background: var(--color-canvas);
+  border-radius: var(--radius-card);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  box-shadow: 0 1px 2px rgba(25, 31, 40, 0.04), 0 4px 16px rgba(25, 31, 40, 0.05);
+}
+
+.risk-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.risk-card__company {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-foreground);
+}
+
+.risk-card__company span {
+  color: var(--color-muted);
+  font-weight: 500;
+  font-size: 13px;
+  margin-left: 6px;
+}
+
+.risk-card__report {
+  background: var(--color-surface);
+  color: var(--color-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-control);
+}
+
+.risk-card__body {
+  background: var(--color-surface);
+  border-radius: var(--radius-card);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.risk-card__body-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.risk-card__confidence {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.risk-card__confidence-track {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--color-border);
+}
+
+.risk-card__confidence-fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.risk-card__confidence-track--high .risk-card__confidence-fill {
+  background: var(--color-severity-high-fg);
+}
+.risk-card__confidence-track--high {
+  background: var(--color-severity-high-bg);
+}
+
+.risk-card__confidence-track--medium .risk-card__confidence-fill {
+  background: var(--color-severity-medium-fg);
+}
+.risk-card__confidence-track--medium {
+  background: var(--color-severity-medium-bg);
+}
+
+.risk-card__confidence-track--low .risk-card__confidence-fill,
+.risk-card__confidence-track--none .risk-card__confidence-fill {
+  background: var(--color-severity-low-fg);
+}
+.risk-card__confidence-track--low,
+.risk-card__confidence-track--none {
+  background: var(--color-severity-low-bg);
+}
+
+.risk-card__snippet {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--color-body);
+  font-weight: 500;
+  margin: 0;
+}
