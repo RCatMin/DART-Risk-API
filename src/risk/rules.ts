@@ -84,11 +84,29 @@ function hasNegationNearby(text: string, index: number, keywordLength: number): 
 }
 
 // stripTags()가 태그 경계를 \n으로 바꿔두기 때문에, 매칭 지점을 포함한 줄이 곧 문단/표 셀 단위다.
-function extractLine(text: string, index: number): string {
+// 다만 개행 없이 아주 긴 문단으로 합쳐진 줄(예: 서술형 문단이 통째로 한 줄인 경우)에서는 매칭 지점이
+// 줄 앞부분에서 500자 넘게 떨어져 있을 수 있어, 줄 시작이 아니라 매칭 지점을 중심으로 잘라야 실제
+// 근거 문구가 스니펫에 포함된다.
+const SNIPPET_WINDOW = 250;
+function extractLine(text: string, index: number, keywordLength: number): string {
   const lineStart = text.lastIndexOf("\n", index) + 1;
   const nextBreak = text.indexOf("\n", index);
   const lineEnd = nextBreak === -1 ? text.length : nextBreak;
-  return text.slice(lineStart, lineEnd).trim();
+  const windowStart = Math.max(lineStart, index - SNIPPET_WINDOW);
+  const windowEnd = Math.min(lineEnd, index + keywordLength + SNIPPET_WINDOW);
+  const withinLine = text.slice(windowStart, windowEnd).trim();
+  if (withinLine.length >= MIN_SNIPPET_LENGTH) return withinLine;
+
+  // 감사보고서제출처럼 라벨과 값이 서로 다른(아주 짧은) 줄에 나뉘어 있는 표 형식 문서는
+  // 같은 줄만 봐서는 항상 MIN_SNIPPET_LENGTH 미만이라 버려진다 — 이 경우엔 줄 경계를 무시하고
+  // 매칭 지점 주변 원문을 그대로 가져와 개행을 공백으로 접어서 라벨+값이 이어지게 만든다.
+  const wideStart = Math.max(0, index - SNIPPET_WINDOW);
+  const wideEnd = Math.min(text.length, index + keywordLength + SNIPPET_WINDOW);
+  return text
+    .slice(wideStart, wideEnd)
+    .replace(/\s*\n\s*/g, " ")
+    .replace(/ {2,}/g, " ")
+    .trim();
 }
 
 // 재무제표 주석은 "소송충당부채", "주요 소송 금액"처럼 표 항목 라벨을 짧은 줄로 반복하는데,
@@ -106,7 +124,7 @@ export function evaluateRisk(rawText: string): RuleFinding[] {
       let index = rawText.indexOf(keyword);
       while (index !== -1) {
         if (!isFalsePositiveMatch(rawText, keyword, index) && !hasNegationNearby(rawText, index, keyword.length)) {
-          const snippet = extractLine(rawText, index).slice(0, 500);
+          const snippet = extractLine(rawText, index, keyword.length);
           const dedupeKey = `${category.type}:${snippet}`;
           const isBoilerplate =
             BOILERPLATE_MARKERS.some((marker) => snippet.includes(marker)) ||
