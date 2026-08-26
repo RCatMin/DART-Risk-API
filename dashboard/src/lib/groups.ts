@@ -53,6 +53,12 @@ export function deleteGroup(groups: CompanyGroup[], groupId: string): CompanyGro
   return next;
 }
 
+export function renameGroup(groups: CompanyGroup[], groupId: string, name: string): CompanyGroup[] {
+  const next = groups.map((g) => (g.id === groupId ? { ...g, name: name.trim() } : g));
+  saveGroups(next);
+  return next;
+}
+
 // 워치리스트에서 종목을 제외했을 때 그룹에 남은 참조를 같이 정리한다.
 export function removeCorpCodeFromGroups(groups: CompanyGroup[], corpCode: string): CompanyGroup[] {
   const next = groups.map((g) => ({ ...g, corpCodes: g.corpCodes.filter((c) => c !== corpCode) }));

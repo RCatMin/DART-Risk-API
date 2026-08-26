@@ -11,5 +11,8 @@ export default defineConfig({
       '/api': 'http://localhost:3001',
       '/health': 'http://localhost:3001',
     },
+    // cloudflared quick tunnel(trycloudflare.com)로 발표 시연용 임시 공개 접속을 열어두기 위함 —
+    // 발표 종료 후 제거할 것.
+    allowedHosts: ['.trycloudflare.com'],
   },
 })

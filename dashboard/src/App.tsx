@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchRiskSummary, setCompanyWatched, type Company, type RiskSummaryEntry } from "./lib/api";
 import { MOCK_RISK_SUMMARY, mockCompanyToSummary } from "./lib/companyMock";
 import { MOCK_INDICES, MOCK_WATCHLIST_PRICES } from "./lib/marketMock";
@@ -10,6 +10,7 @@ import {
   loadGroups,
   makeGroup,
   removeCorpCodeFromGroups,
+  renameGroup,
   type CompanyGroup,
 } from "./lib/groups";
 import { RiskCard } from "./components/RiskCard";
@@ -38,6 +39,9 @@ function App() {
   const [isGroupModalOpen, setGroupModalOpen] = useState(false);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
   const [isAddToGroupOpen, setAddToGroupOpen] = useState(false);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState("");
+  const suppressRenameBlurRef = useRef(false);
 
   useEffect(() => {
     fetchRiskSummary({ isWatched: "true" })
@@ -136,6 +140,33 @@ function App() {
     if (activeGroupId === groupId) setActiveGroupId(null);
   }
 
+  function handleStartRenameGroup(group: CompanyGroup) {
+    // 이전 편집 세션이 Escape로 취소된 뒤 브라우저가 blur 이벤트를 늦게(또는 전혀) 보낼 수
+    // 있어서, 새 편집을 시작할 때마다 억제 플래그를 확실히 초기화한다 — 안 그러면 이전
+    // 취소의 흔적이 이번 정상 커밋(blur)을 엉뚱하게 삼켜버린다.
+    suppressRenameBlurRef.current = false;
+    setEditingGroupId(group.id);
+    setEditingGroupName(group.name);
+  }
+
+  function handleRenameGroupSubmit() {
+    if (suppressRenameBlurRef.current) {
+      suppressRenameBlurRef.current = false;
+      return;
+    }
+    if (!editingGroupId) return;
+    const trimmed = editingGroupName.trim();
+    if (trimmed) {
+      setGroups((prev) => renameGroup(prev, editingGroupId, trimmed));
+    }
+    setEditingGroupId(null);
+  }
+
+  function handleRenameGroupCancel() {
+    suppressRenameBlurRef.current = true;
+    setEditingGroupId(null);
+  }
+
   function handleAddToGroup(corpCodes: string[]) {
     if (!activeGroupId) return;
     setGroups((prev) => addCorpCodesToGroup(prev, activeGroupId, corpCodes));
@@ -191,24 +222,48 @@ function App() {
                 >
                   전체
                 </button>
-                {groups.map((group) => (
-                  <span
-                    key={group.id}
-                    className={`group-tabs__tab${activeGroupId === group.id ? " group-tabs__tab--active" : ""}`}
-                  >
-                    <button type="button" onClick={() => setActiveGroupId(group.id)}>
-                      {group.name} <span className="group-tabs__count">{group.corpCodes.length}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="group-tabs__remove"
-                      aria-label={`${group.name} 그룹 삭제`}
-                      onClick={() => handleDeleteGroup(group.id)}
+                {groups.map((group) =>
+                  editingGroupId === group.id ? (
+                    <input
+                      key={group.id}
+                      type="text"
+                      className="group-tabs__rename-input"
+                      value={editingGroupName}
+                      onChange={(e) => setEditingGroupName(e.target.value)}
+                      onBlur={handleRenameGroupSubmit}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") e.currentTarget.blur();
+                        if (e.key === "Escape") handleRenameGroupCancel();
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      key={group.id}
+                      className={`group-tabs__tab${activeGroupId === group.id ? " group-tabs__tab--active" : ""}`}
                     >
-                      ×
-                    </button>
-                  </span>
-                ))}
+                      <button type="button" onClick={() => setActiveGroupId(group.id)}>
+                        {group.name} <span className="group-tabs__count">{group.corpCodes.length}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="group-tabs__edit"
+                        aria-label={`${group.name} 그룹 이름 수정`}
+                        onClick={() => handleStartRenameGroup(group)}
+                      >
+                        ✎
+                      </button>
+                      <button
+                        type="button"
+                        className="group-tabs__remove"
+                        aria-label={`${group.name} 그룹 삭제`}
+                        onClick={() => handleDeleteGroup(group.id)}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ),
+                )}
               </div>
             )}
 

@@ -202,6 +202,44 @@
   color: var(--color-weak-foreground);
 }
 
+.group-tabs__rename-input {
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-chip);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-foreground);
+  background: var(--color-canvas);
+  min-width: 90px;
+}
+
+.group-tabs__rename-input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.group-tabs__edit {
+  all: unset;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.group-tabs__edit:hover {
+  background: var(--color-weak-background);
+  color: var(--color-weak-foreground);
+}
+
 .group-tabs__remove {
   all: unset;
   box-sizing: border-box;
