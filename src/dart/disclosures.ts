@@ -12,8 +12,8 @@ interface DartListItem {
   rcept_dt: string;
 }
 
-// CLAUDE.md 스코프: 사업보고서 / 감사보고서 2종만 대상
-const TARGET_REPORT_KEYWORDS = ["사업보고서", "감사보고서"];
+// CLAUDE.md 스코프: 사업보고서 / 감사보고서 / 주요사항보고서 3종 대상
+const TARGET_REPORT_KEYWORDS = ["사업보고서", "감사보고서", "주요사항보고서"];
 
 export async function fetchDisclosures(params: {
   corpCode: string;

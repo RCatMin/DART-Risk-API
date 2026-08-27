@@ -44,7 +44,11 @@ export async function fetchReportText(rceptNo: string, reportNm: string): Promis
     throw new Error(`DART document.xml 응답에 문서가 없습니다 (rcept_no=${rceptNo})`);
   }
 
-  const keyword = reportNm.includes("감사보고서") ? "감사보고서" : "사업보고서";
+  const keyword = reportNm.includes("감사보고서")
+    ? "감사보고서"
+    : reportNm.includes("주요사항보고서")
+      ? "주요사항보고서"
+      : "사업보고서";
   const candidates = documents.filter((doc) => doc.docName.includes(keyword));
   const pool = candidates.length > 0 ? candidates : documents;
 

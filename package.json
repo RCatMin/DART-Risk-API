@@ -28,6 +28,7 @@
     "@prisma/engines@7.9.1": true
   },
   "dependencies": {
+    "@google/genai": "^2.19.0",
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
     "bullmq": "^6.2.0",

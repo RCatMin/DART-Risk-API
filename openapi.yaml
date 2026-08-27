@@ -100,8 +100,10 @@ paths:
 
   /api/companies/risk-summary:
     get:
-      summary: 회사별 현재 리스크 상태 (가장 심각하고 동률이면 가장 최근인 것 1건)
+      summary: 회사별 현재 리스크 상태 (리스크 유형별로 가장 심각하고 동률이면 가장 최근인 것 1건씩)
       description: >
+        한 회사가 서로 다른 유형(예: 소송 + 지분희석)의 리스크를 동시에 가질 수 있어, 유형별로 대표
+        플래그 하나씩을 배열로 돌려준다. `riskFlags`가 빈 배열이면 해당없음이다.
         `/api/risk-flags?limit=`처럼 전체를 최신순으로 잘라서 회사별로 매핑하면 데이터가 많아질수록
         특정 회사의 실제 리스크가 다른 레코드에 밀려 잘려나갈 수 있어, 회사마다 독립적으로 계산한다.
       parameters:
@@ -128,10 +130,11 @@ paths:
                           properties:
                             company:
                               $ref: "#/components/schemas/Company"
-                            riskFlag:
-                              nullable: true
-                              allOf:
-                                - $ref: "#/components/schemas/RiskFlag"
+                            riskFlags:
+                              type: array
+                              description: "빈 배열이면 해당없음. 심각도 내림차순으로 정렬되어 있다."
+                              items:
+                                $ref: "#/components/schemas/RiskFlag"
         "401":
           $ref: "#/components/responses/Unauthorized"
 
@@ -411,6 +414,8 @@ components:
         - embezzlement
         - litigation
         - management_designation
+        - insolvency
+        - dilution
         - not_applicable
 
     RiskSeverity:
