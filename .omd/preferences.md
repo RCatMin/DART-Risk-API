@@ -15,10 +15,10 @@ signal: ambient
 confidence: inferred
 status: pending
 source_agent: claude-code
-source_context: "/Users/stupidcatspring/orca/workspaces/DARTStockAPI/DARTAPI-Dashboard/dashboard/src/components/MarketPanel.css"
+source_context: "dashboard/src/components/MarketPanel.css"
 ```
 
-Introduced off-palette color(s) #d92d20, #2f6fed in /Users/stupidcatspring/orca/workspaces/DARTStockAPI/DARTAPI-Dashboard/dashboard/src/components/MarketPanel.css — not in DESIGN.md
+Introduced off-palette color(s) #d92d20, #2f6fed in dashboard/src/components/MarketPanel.css — not in DESIGN.md
 
 ## 2026-08-25T03:27:37.404Z — market-panel-up-down-colors
 
